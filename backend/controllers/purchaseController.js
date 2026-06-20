@@ -1,4 +1,4 @@
-const db = require('../config/db');
+﻿const db = require('../config/db');
 const model = require('../models/purchaseModel');
 
 const isValidId = (value) => Number.isInteger(value) && value > 0;
@@ -25,17 +25,26 @@ exports.getById = async (req, res) => {
   }
 };
 
+exports.getProducts = async (req, res) => {
+  try {
+    const [rows] = await model.getProducts();
+    res.json({ success: true, data: rows, message: 'Purchase products fetched' });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
 exports.create = async (req, res) => {
   const conn = await db.promise().getConnection();
   try {
     const { supplier_id, purchase_date, items } = req.body;
     const normalizedSupplierId = supplier_id == null || supplier_id === '' ? null : Number(supplier_id);
 
+    if (!isValidId(normalizedSupplierId)) {
+      return res.status(400).json({ success: false, message: 'supplier_id is required' });
+    }
     if (!purchase_date || !Array.isArray(items) || !items.length) {
       return res.status(400).json({ success: false, message: 'purchase_date and items are required' });
-    }
-    if (normalizedSupplierId !== null && !isValidId(normalizedSupplierId)) {
-      return res.status(400).json({ success: false, message: 'supplier_id is invalid' });
     }
 
     let totalAmount = 0;
@@ -82,6 +91,8 @@ exports.create = async (req, res) => {
         reference_type: 'PURCHASE',
         note: null,
       });
+
+      await model.updateProductCostPrice(conn, item.product_id, item.price);
     }
 
     await conn.commit();

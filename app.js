@@ -1,4 +1,4 @@
-require("dotenv").config();
+﻿require("dotenv").config();
 const express = require("express");
 const cors = require("cors");
 
@@ -23,7 +23,6 @@ app.use("/api/brands", require("./backend/routes/brandRoutes"));
 app.use("/api/products", require("./backend/routes/productRoutes"));
 app.use("/api/suppliers", require("./backend/routes/supplierRoutes"));
 app.use("/api/purchases", require("./backend/routes/purchaseRoutes"));
+app.use("/api/sales", require("./backend/routes/saleRoutes"));
 
 app.listen(port, () => console.log(`Server running on ${port}`));
-
-

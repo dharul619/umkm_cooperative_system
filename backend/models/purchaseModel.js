@@ -1,4 +1,4 @@
-const db = require('../config/db');
+﻿const db = require('../config/db');
 
 exports.getAll = () =>
   db.promise().query(
@@ -29,6 +29,9 @@ exports.createDetail = (conn, data) =>
     [data.purchase_id, data.product_id, data.qty, data.price, data.subtotal]
   );
 
+exports.updateProductCostPrice = (conn, productId, costPrice) =>
+  conn.execute('UPDATE products SET cost_price = ? WHERE id = ?', [costPrice, productId]);
+
 exports.createInventoryTransaction = (conn, data) =>
   conn.execute(
     'INSERT INTO inventory_transactions (product_id, type, qty, reference_id, reference_type, note) VALUES (?, ?, ?, ?, ?, ?)',
@@ -36,4 +39,7 @@ exports.createInventoryTransaction = (conn, data) =>
   );
 
 exports.getProductById = (conn, id) =>
-  conn.execute('SELECT id, name, cost_price FROM products WHERE id = ?', [id]);
+  conn.execute('SELECT id, name, cost_price, selling_price, barcode FROM products WHERE id = ?', [id]);
+
+exports.getProducts = () =>
+  db.promise().query('SELECT id, name, barcode, selling_price, cost_price, unit FROM products ORDER BY name ASC');

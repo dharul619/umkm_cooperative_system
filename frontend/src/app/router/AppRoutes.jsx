@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from "react-router-dom";
+﻿import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../../features/auth/pages/LoginPage";
 import RegisterPage from "../../features/auth/pages/RegisterPage";
 import ProtectedRoute from "./ProtectedRoute";
@@ -25,6 +25,7 @@ import BrandPage from "../../features/retail/master-data/pages/BrandPage";
 import ProductPage from "../../features/retail/master-data/pages/ProductPage";
 import SupplierPage from "../../features/retail/master-data/pages/SupplierPage";
 import PurchasePage from "../../features/retail/purchases/pages/PurchasePage";
+import SalesPage from "../../features/retail/sales/pages/SalesPage";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { CircularProgress, Box } from "@mui/material";
 
@@ -84,6 +85,7 @@ const AppRoutes = () => {
         <Route path="master/products" element={<ProductPage />} />
         <Route path="master/suppliers" element={<SupplierPage />} />
         <Route path="master/purchases" element={<PurchasePage />} />
+        <Route path="master/sales" element={<SalesPage />} />
       </Route>
 
       <Route path="/member" element={<RoleRoute requiredRole="Cooperative Member"><AdminLayout /></RoleRoute>}>

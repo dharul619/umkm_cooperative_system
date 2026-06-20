@@ -1,4 +1,4 @@
-import { NavLink } from "react-router-dom";
+﻿import { NavLink } from "react-router-dom";
 import {
   Box,
   Divider,
@@ -28,6 +28,7 @@ import CategoryRounded from "@mui/icons-material/CategoryRounded";
 import BusinessRounded from "@mui/icons-material/BusinessRounded";
 import Inventory2Rounded from "@mui/icons-material/Inventory2Rounded";
 import ReceiptRounded from "@mui/icons-material/ReceiptRounded";
+import PointOfSaleRounded from "@mui/icons-material/PointOfSaleRounded";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 
 export const drawerWidth = 264;
@@ -55,6 +56,7 @@ const roleItems = {
     { label: "Produk", path: "/retail/master/products", icon: Inventory2Rounded },
     { label: "Supplier", path: "/retail/master/suppliers", icon: LocalShippingRounded },
     { label: "Pembelian", path: "/retail/master/purchases", icon: ReceiptRounded },
+    { label: "Penjualan", path: "/retail/master/sales", icon: PointOfSaleRounded },
   ],
   "Cooperative Member": [
     { label: "Jastip Menu", path: "/member/jastip", icon: ShoppingBagRounded },
