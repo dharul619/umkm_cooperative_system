@@ -17,5 +17,13 @@ app.use("/api/jastip", require("./backend/routes/jastipRoutes"));
 app.use("/api/payments", require("./backend/routes/paymentRoutes"));
 app.use("/api/users", require("./backend/routes/userRoutes"));
 app.use("/api/auth", require("./backend/routes/authRoutes"));
+app.use("/api/categories", require("./backend/routes/categoryRoutes"));
+app.use("/api/subcategories", require("./backend/routes/subcategoryRoutes"));
+app.use("/api/brands", require("./backend/routes/brandRoutes"));
+app.use("/api/products", require("./backend/routes/productRoutes"));
+app.use("/api/suppliers", require("./backend/routes/supplierRoutes"));
+app.use("/api/purchases", require("./backend/routes/purchaseRoutes"));
 
 app.listen(port, () => console.log(`Server running on ${port}`));
+
+

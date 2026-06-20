@@ -24,6 +24,10 @@ import LocalShippingRounded from "@mui/icons-material/LocalShippingRounded";
 import ShoppingBagRounded from "@mui/icons-material/ShoppingBagRounded";
 import HistoryRounded from "@mui/icons-material/HistoryRounded";
 import ViewListRounded from "@mui/icons-material/ViewListRounded";
+import CategoryRounded from "@mui/icons-material/CategoryRounded";
+import BusinessRounded from "@mui/icons-material/BusinessRounded";
+import Inventory2Rounded from "@mui/icons-material/Inventory2Rounded";
+import ReceiptRounded from "@mui/icons-material/ReceiptRounded";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 
 export const drawerWidth = 264;
@@ -43,6 +47,14 @@ const roleItems = {
     { label: "Orders", path: "/jastip/orders", icon: ReceiptLongRounded },
     { label: "Payments", path: "/jastip/payments", icon: PaymentsRounded },
     { label: "Vendor Dispatch", path: "/jastip/vendor-dispatch", icon: LocalShippingRounded },
+  ],
+  "Business Coordinator": [
+    { label: "Kategori", path: "/retail/master/categories", icon: CategoryRounded },
+    { label: "Subkategori", path: "/retail/master/subcategories", icon: AccountTreeRounded },
+    { label: "Brand", path: "/retail/master/brands", icon: BusinessRounded },
+    { label: "Produk", path: "/retail/master/products", icon: Inventory2Rounded },
+    { label: "Supplier", path: "/retail/master/suppliers", icon: LocalShippingRounded },
+    { label: "Pembelian", path: "/retail/master/purchases", icon: ReceiptRounded },
   ],
   "Cooperative Member": [
     { label: "Jastip Menu", path: "/member/jastip", icon: ShoppingBagRounded },

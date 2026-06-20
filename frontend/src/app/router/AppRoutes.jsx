@@ -19,12 +19,19 @@ import DivisionPage from "../../features/jastip/master-data/pages/DivisionPage";
 import DepartmentPage from "../../features/jastip/master-data/pages/DepartmentPage";
 import VendorPage from "../../features/jastip/master-data/pages/VendorPage";
 import MenuPage from "../../features/jastip/master-data/pages/MenuPage";
+import CategoryPage from "../../features/retail/master-data/pages/CategoryPage";
+import SubcategoryPage from "../../features/retail/master-data/pages/SubcategoryPage";
+import BrandPage from "../../features/retail/master-data/pages/BrandPage";
+import ProductPage from "../../features/retail/master-data/pages/ProductPage";
+import SupplierPage from "../../features/retail/master-data/pages/SupplierPage";
+import PurchasePage from "../../features/retail/purchases/pages/PurchasePage";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { CircularProgress, Box } from "@mui/material";
 
 const resolveLandingPath = (roleName) => {
   if (roleName === "Jastip Coordinator") return "/jastip/dashboard";
   if (roleName === "Cooperative Member") return "/member/jastip";
+  if (roleName === "Business Coordinator") return "/retail/master/categories";
   if (roleName === "System Administrator") return "/admin/dashboard";
   return "/dashboard";
 };
@@ -66,6 +73,17 @@ const AppRoutes = () => {
         <Route path="orders" element={<OrdersPage />} />
         <Route path="master/vendors" element={<VendorPage />} />
         <Route path="master/menus" element={<MenuPage />} />
+      </Route>
+
+      <Route path="/retail" element={<RoleRoute requiredRole="Business Coordinator"><AdminLayout /></RoleRoute>}>
+        <Route index element={<Navigate to="/retail/master/categories" replace />} />
+        <Route path="dashboard" element={<Navigate to="/retail/master/categories" replace />} />
+        <Route path="master/categories" element={<CategoryPage />} />
+        <Route path="master/subcategories" element={<SubcategoryPage />} />
+        <Route path="master/brands" element={<BrandPage />} />
+        <Route path="master/products" element={<ProductPage />} />
+        <Route path="master/suppliers" element={<SupplierPage />} />
+        <Route path="master/purchases" element={<PurchasePage />} />
       </Route>
 
       <Route path="/member" element={<RoleRoute requiredRole="Cooperative Member"><AdminLayout /></RoleRoute>}>

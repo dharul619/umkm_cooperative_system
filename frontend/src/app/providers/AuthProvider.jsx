@@ -18,6 +18,7 @@ const decodeToken = (token) => {
 
 const resolveLandingPath = (roleName) => {
   if (roleName === "Jastip Coordinator") return "/jastip/dashboard";
+  if (roleName === "Business Coordinator") return "/retail/master/categories";
   if (roleName === "System Administrator") return "/admin/dashboard";
   return "/dashboard";
 };

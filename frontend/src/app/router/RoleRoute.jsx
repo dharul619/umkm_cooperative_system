@@ -1,10 +1,11 @@
-import { Navigate } from "react-router-dom";
+﻿import { Navigate } from "react-router-dom";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { CircularProgress, Box } from "@mui/material";
 
 const resolveFallbackRoute = (roleName) => {
   if (roleName === "Jastip Coordinator") return "/jastip/dashboard";
   if (roleName === "Cooperative Member") return "/member/jastip";
+  if (roleName === "Business Coordinator") return "/retail/master/categories";
   if (roleName === "System Administrator") return "/admin/dashboard";
   return "/dashboard";
 };
