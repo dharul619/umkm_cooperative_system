@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+﻿import { useCallback, useEffect, useState } from "react";
 import { purchaseService } from "../services/purchaseService";
 
 export const usePurchases = () => {
@@ -30,7 +30,7 @@ export const usePurchases = () => {
       setError("");
       const response = await purchaseService.create(payload);
       await fetchPurchases();
-      return response?.message || "Pembelian berhasil dibuat";
+      return response;
     } catch (err) {
       setError(err.message || "Gagal membuat pembelian");
       throw err;

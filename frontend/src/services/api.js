@@ -20,5 +20,6 @@ export const API_ENDPOINTS = {
     SUPPLIERS: "/suppliers",
     PURCHASES: "/purchases",
     SALES: "/sales",
+    INVENTORY: "/inventory",
   },
 };

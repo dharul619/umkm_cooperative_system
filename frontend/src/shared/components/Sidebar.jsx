@@ -29,6 +29,7 @@ import BusinessRounded from "@mui/icons-material/BusinessRounded";
 import Inventory2Rounded from "@mui/icons-material/Inventory2Rounded";
 import ReceiptRounded from "@mui/icons-material/ReceiptRounded";
 import PointOfSaleRounded from "@mui/icons-material/PointOfSaleRounded";
+import TuneRounded from "@mui/icons-material/TuneRounded";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 
 export const drawerWidth = 264;
@@ -57,6 +58,7 @@ const roleItems = {
     { label: "Supplier", path: "/retail/master/suppliers", icon: LocalShippingRounded },
     { label: "Pembelian", path: "/retail/master/purchases", icon: ReceiptRounded },
     { label: "Penjualan", path: "/retail/master/sales", icon: PointOfSaleRounded },
+    { label: "Inventory", path: "/retail/master/inventory", icon: TuneRounded },
   ],
   "Cooperative Member": [
     { label: "Jastip Menu", path: "/member/jastip", icon: ShoppingBagRounded },

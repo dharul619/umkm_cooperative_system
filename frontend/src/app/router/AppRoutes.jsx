@@ -26,6 +26,7 @@ import ProductPage from "../../features/retail/master-data/pages/ProductPage";
 import SupplierPage from "../../features/retail/master-data/pages/SupplierPage";
 import PurchasePage from "../../features/retail/purchases/pages/PurchasePage";
 import SalesPage from "../../features/retail/sales/pages/SalesPage";
+import InventoryPage from "../../features/retail/inventory/pages/InventoryPage";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { CircularProgress, Box } from "@mui/material";
 
@@ -86,6 +87,7 @@ const AppRoutes = () => {
         <Route path="master/suppliers" element={<SupplierPage />} />
         <Route path="master/purchases" element={<PurchasePage />} />
         <Route path="master/sales" element={<SalesPage />} />
+        <Route path="master/inventory" element={<InventoryPage />} />
       </Route>
 
       <Route path="/member" element={<RoleRoute requiredRole="Cooperative Member"><AdminLayout /></RoleRoute>}>

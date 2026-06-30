@@ -24,5 +24,6 @@ app.use("/api/products", require("./backend/routes/productRoutes"));
 app.use("/api/suppliers", require("./backend/routes/supplierRoutes"));
 app.use("/api/purchases", require("./backend/routes/purchaseRoutes"));
 app.use("/api/sales", require("./backend/routes/saleRoutes"));
+app.use("/api/inventory", require("./backend/routes/inventoryRoutes"));
 
 app.listen(port, () => console.log(`Server running on ${port}`));
