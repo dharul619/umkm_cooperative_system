@@ -116,3 +116,6 @@ exports.createSessionWithMenus = async ({ order_date, coordinator_id, menus }) =
 
   return sessionId;
 };
+
+exports.updateStatus = (id, status) =>
+  db.promise().query("UPDATE jastip_orders SET status = ? WHERE id = ?", [status, id]);

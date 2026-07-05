@@ -61,4 +61,28 @@ export const jastipService = {
     const response = await axiosInstance.get("/jastip/member/orders");
     return response.data;
   },
+  updateSessionStatus: async (id, status) => {
+    const response = await axiosInstance.patch(`/jastip/sessions/${id}/status`, { status });
+    return response.data;
+  },
+  updateOrderDetail: async (id, qty) => {
+    const response = await axiosInstance.put(`/jastip/order-details/${id}`, { qty });
+    return response.data;
+  },
+  deleteOrderDetail: async (id) => {
+    const response = await axiosInstance.delete(`/jastip/order-details/${id}`);
+    return response.data;
+  },
+  getVendorOrders: async (sessionId) => {
+    const response = await axiosInstance.get(`/jastip/sessions/${sessionId}/vendor-orders`);
+    return response.data;
+  },
+  markVendorOrderSent: async (vendorOrderId) => {
+    const response = await axiosInstance.patch(`/jastip/vendor-orders/${vendorOrderId}/sent`);
+    return response.data;
+  },
+  settlePayment: async (paymentId) => {
+    const response = await axiosInstance.put(`/payments/${paymentId}/settle`);
+    return response.data;
+  },
 };

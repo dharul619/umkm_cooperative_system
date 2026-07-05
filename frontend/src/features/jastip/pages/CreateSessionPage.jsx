@@ -38,6 +38,7 @@ const CreateSessionPage = () => {
       return;
     }
 
+    const addedName = selectedMenu?.name || "Menu";
     setSessionMenus((current) => [
       ...current,
       {
@@ -52,6 +53,7 @@ const CreateSessionPage = () => {
     setSelectedMenuId("");
     setSelectedNotes("");
     setError("");
+    setSuccess(`Menu "${addedName}" berhasil ditambahkan ke daftar session.`);
   };
 
   const handleRemoveMenu = (menuId) => {

@@ -1,4 +1,4 @@
-﻿const model = require("../models/paymentModel");
+const model = require("../models/paymentModel");
 const orderModel = require("../models/jastipOrderModel");
 
 const PAYMENT_METHODS = ["CASH", "QRIS"];
@@ -53,7 +53,7 @@ exports.createMockPayment = async (req, res) => {
       return res.status(404).json({ message: "Order tidak ditemukan pada akun ini" });
     }
 
-    const totalAmount = targetRows.reduce((sum, row) => sum + Number(row.subtotal || 0), 0);
+    const totalAmount = targetRows.reduce((sum, row) => sum + Number(row.subtotal || 0), 0) + 2000;
     const safeAmount = Number(amount || totalAmount);
     const externalReference = `JASTIP-${order_id}-${req.user.id}-${Date.now()}`;
     const expiresAt = new Date(Date.now() + 15 * 60 * 1000);
@@ -67,6 +67,8 @@ exports.createMockPayment = async (req, res) => {
       external_reference: externalReference,
       expires_at: expiresAt,
     });
+
+    await orderModel.updateOrderPaymentStatus(Number(order_id));
 
     res.json({
       message: "Mock payment created",
@@ -88,12 +90,19 @@ exports.settleMockPayment = async (req, res) => {
     const { id } = req.params;
     const payment = await model.getById(id);
 
-    if (!payment || String(payment.member_id) !== String(req.user.id)) {
-      return res.status(404).json({ message: "Payment tidak ditemukan pada akun ini" });
+    if (!payment) {
+      return res.status(404).json({ message: "Payment tidak ditemukan" });
     }
 
-    if (payment.payment_method === "CASH") {
-      return res.status(400).json({ message: "Payment tunai harus dikonfirmasi coordinator" });
+    const isMember = req.user.role === "Cooperative Member";
+
+    if (isMember) {
+      if (String(payment.member_id) !== String(req.user.id)) {
+        return res.status(403).json({ message: "Anda tidak berhak mengakses payment ini" });
+      }
+      if (payment.payment_method === "CASH") {
+        return res.status(400).json({ message: "Payment tunai harus dikonfirmasi coordinator" });
+      }
     }
 
     await model.updateState(id, {
@@ -102,6 +111,9 @@ exports.settleMockPayment = async (req, res) => {
       webhook_delivered: 1,
       webhook_attempts: 1,
     });
+
+    await orderModel.updateOrderPaymentStatus(payment.order_id);
+
     res.json({ message: "Payment settled" });
   } catch (err) {
     console.error("settleMockPayment error:", err);
@@ -114,8 +126,16 @@ exports.failMockPayment = async (req, res) => {
     const { id } = req.params;
     const payment = await model.getById(id);
 
-    if (!payment || String(payment.member_id) !== String(req.user.id)) {
-      return res.status(404).json({ message: "Payment tidak ditemukan pada akun ini" });
+    if (!payment) {
+      return res.status(404).json({ message: "Payment tidak ditemukan" });
+    }
+
+    const isMember = req.user.role === "Cooperative Member";
+
+    if (isMember) {
+      if (String(payment.member_id) !== String(req.user.id)) {
+        return res.status(403).json({ message: "Anda tidak berhak mengakses payment ini" });
+      }
     }
 
     await model.updateState(id, {
@@ -124,6 +144,9 @@ exports.failMockPayment = async (req, res) => {
       webhook_delivered: 0,
       webhook_attempts: 1,
     });
+
+    await orderModel.updateOrderPaymentStatus(payment.order_id);
+
     res.json({ message: "Payment failed" });
   } catch (err) {
     console.error("failMockPayment error:", err);

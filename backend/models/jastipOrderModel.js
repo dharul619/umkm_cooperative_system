@@ -2,12 +2,7 @@ const db = require("../config/db");
 
 const OPERATION_FEE_PER_SESSION = 2000;
 
-const paymentStatusExpr = `CASE
-  WHEN COUNT(DISTINCT pay.id) = 0 THEN 'UNPAID'
-  WHEN SUM(CASE WHEN pay.state = 'SETTLED' THEN 1 ELSE 0 END) = 0 THEN 'UNPAID'
-  WHEN SUM(CASE WHEN pay.state = 'SETTLED' THEN 1 ELSE 0 END) >= COUNT(DISTINCT jod.user_id) THEN 'PAID'
-  ELSE 'PARTIAL'
-END`;
+const paymentStatusExpr = `COALESCE(MAX(pay.state), 'UNPAID')`;
 
 exports.getAll = () =>
   db.promise().query(
@@ -27,6 +22,7 @@ exports.getAll = () =>
             v.name AS vendor_name,
             ${paymentStatusExpr} AS payment_status,
             COALESCE(MAX(pay.payment_method), 'CASH') AS payment_method,
+            MAX(pay.id) AS payment_id,
             jo.status AS status,
             jo.total_amount,
             jo.total_profit,
@@ -77,6 +73,7 @@ exports.getByMemberId = (memberId) =>
             v.name AS vendor_name,
             ${paymentStatusExpr} AS payment_status,
             COALESCE(MAX(pay.payment_method), 'CASH') AS payment_method,
+            MAX(pay.id) AS payment_id,
             jo.status AS status,
             jo.total_amount,
             jo.total_profit,
@@ -188,57 +185,158 @@ exports.createMemberOrder = async ({ session_id, member_id, items }) => {
       throw new Error("Tidak ada menu valid untuk disimpan");
     }
 
-    const [allRows] = await connection.query(
-      `SELECT id, subtotal
-       FROM jastip_order_details
-       WHERE order_id = ? AND user_id = ?
-       ORDER BY id ASC`,
-      [session_id, member_id],
-    );
+    await exports.redistributeMemberProfit(connection, session_id, member_id);
+    await exports.updateSessionAggregates(connection, session_id);
+    await exports.updateOrderPaymentStatus(session_id);
 
-    const totalItems = allRows.length;
-    const operationFee = OPERATION_FEE_PER_SESSION;
-    const baseShare = totalItems > 0 ? Math.floor(operationFee / totalItems) : 0;
-    let remainder = operationFee - baseShare * totalItems;
-    let totalProfit = 0;
-
-    for (const row of allRows) {
-      const extra = remainder > 0 ? 1 : 0;
-      if (remainder > 0) remainder -= 1;
-      const profit = baseShare + extra;
-      totalProfit += profit;
-      await connection.query(
-        "UPDATE jastip_order_details SET profit = ? WHERE id = ?",
-        [profit, row.id],
-      );
-    }
-
-    const [aggregateRows] = await connection.query(
-      `SELECT SUM(subtotal) AS total_amount
-       FROM jastip_order_details
-       WHERE order_id = ?`,
-      [session_id],
-    );
-
-    const coordinatorShare = Math.floor(totalProfit / 2);
-    const koperasiShare = totalProfit - coordinatorShare;
-
-    await connection.query(
-      `UPDATE jastip_orders
-       SET total_amount = ?, total_profit = ?, coordinator_share = ?, koperasi_share = ?
-       WHERE id = ?`,
-      [
-        Number(aggregateRows?.[0]?.total_amount || 0),
-        totalProfit,
-        coordinatorShare,
-        koperasiShare,
-        session_id,
-      ],
-    );
-
-    return detailResults.map((item) => ({ ...item, operation_fee: operationFee, total_profit: totalProfit, subtotal_sum: subtotalSum }));
+    return detailResults.map((item) => ({ ...item, operation_fee: OPERATION_FEE_PER_SESSION, subtotal_sum: subtotalSum }));
   } catch (err) {
     console.error("createMemberOrder failed:", err);
     throw err;
   }
+};
+
+exports.redistributeMemberProfit = async (connection, sessionId, memberId) => {
+  const [rows] = await connection.query(
+    `SELECT id FROM jastip_order_details
+     WHERE order_id = ? AND user_id = ?
+     ORDER BY id ASC`,
+    [sessionId, memberId]
+  );
+  
+  const totalItems = rows.length;
+  if (totalItems === 0) return;
+  
+  const operationFee = OPERATION_FEE_PER_SESSION;
+  const baseShare = Math.floor(operationFee / totalItems);
+  let remainder = operationFee - baseShare * totalItems;
+  
+  for (const row of rows) {
+    const extra = remainder > 0 ? 1 : 0;
+    if (remainder > 0) remainder -= 1;
+    const profit = baseShare + extra;
+    await connection.query(
+      "UPDATE jastip_order_details SET profit = ? WHERE id = ?",
+      [profit, row.id]
+    );
+  }
+};
+
+exports.updateSessionAggregates = async (connection, sessionId) => {
+  const [memberRows] = await connection.query(
+    "SELECT DISTINCT user_id FROM jastip_order_details WHERE order_id = ?",
+    [sessionId]
+  );
+  
+  const uniqueMemberCount = memberRows.length;
+  const totalProfit = uniqueMemberCount * OPERATION_FEE_PER_SESSION;
+  
+  const [amountRows] = await connection.query(
+    "SELECT SUM(subtotal) AS total_amount FROM jastip_order_details WHERE order_id = ?",
+    [sessionId]
+  );
+  const totalAmount = Number(amountRows?.[0]?.total_amount || 0);
+  
+  const coordinatorShare = Math.floor(totalProfit / 2);
+  const koperasiShare = totalProfit - coordinatorShare;
+  
+  await connection.query(
+    `UPDATE jastip_orders
+     SET total_amount = ?, total_profit = ?, coordinator_share = ?, koperasi_share = ?
+     WHERE id = ?`,
+    [totalAmount, totalProfit, coordinatorShare, koperasiShare, sessionId]
+  );
+};
+
+exports.updateOrderPaymentStatus = async (orderId) => {
+  const connection = db.promise();
+  
+  const [memberRows] = await connection.query(
+    "SELECT DISTINCT user_id FROM jastip_order_details WHERE order_id = ?",
+    [orderId]
+  );
+  
+  if (memberRows.length === 0) {
+    await connection.query(
+      "UPDATE jastip_orders SET payment_status = 'UNPAID' WHERE id = ?",
+      [orderId]
+    );
+    return;
+  }
+  
+  const memberIds = memberRows.map(r => r.user_id);
+  
+  const [paymentRows] = await connection.query(
+    "SELECT member_id, state FROM payments WHERE order_id = ? AND state = 'SETTLED'",
+    [orderId]
+  );
+  
+  const settledMemberIds = new Set(paymentRows.map(r => r.member_id));
+  
+  let settledCount = 0;
+  for (const mid of memberIds) {
+    if (settledMemberIds.has(mid)) {
+      settledCount++;
+    }
+  }
+  
+  let status = "UNPAID";
+  if (settledCount === memberIds.length) {
+    status = "PAID";
+  } else if (settledCount > 0) {
+    status = "PARTIAL";
+  }
+  
+  await connection.query(
+    "UPDATE jastip_orders SET payment_status = ? WHERE id = ?",
+    [status, orderId]
+  );
+};
+
+exports.getOrderDetailById = async (id) => {
+  const [rows] = await db.promise().query(
+    `SELECT jod.*, jo.status AS session_status
+     FROM jastip_order_details jod
+     INNER JOIN jastip_orders jo ON jod.order_id = jo.id
+     WHERE jod.id = ?
+     LIMIT 1`,
+    [id]
+  );
+  return rows[0] || null;
+};
+
+exports.updateOrderDetail = async (id, qty, subtotal) => {
+  return db.promise().query(
+    "UPDATE jastip_order_details SET qty = ?, subtotal = ? WHERE id = ?",
+    [qty, subtotal, id]
+  );
+};
+
+exports.deleteOrderDetail = async (id) => {
+  return db.promise().query(
+    "DELETE FROM jastip_order_details WHERE id = ?",
+    [id]
+  );
+};
+
+exports.getMemberOrderPayment = async (memberId, sessionId) => {
+  const [rows] = await db.promise().query(
+    "SELECT id, state FROM payments WHERE member_id = ? AND order_id = ? LIMIT 1",
+    [memberId, sessionId]
+  );
+  return rows[0] || null;
+};
+
+exports.updatePaymentAmount = async (paymentId, amount) => {
+  return db.promise().query(
+    "UPDATE payments SET amount = ?, updated_at = NOW() WHERE id = ?",
+    [amount, paymentId]
+  );
+};
+
+exports.deletePayment = async (paymentId) => {
+  return db.promise().query(
+    "DELETE FROM payments WHERE id = ?",
+    [paymentId]
+  );
 };

@@ -1,4 +1,4 @@
-﻿import { NavLink } from "react-router-dom";
+import { NavLink } from "react-router-dom";
 import {
   Box,
   Divider,
@@ -38,26 +38,75 @@ const roleItems = {
   "System Administrator": [
     { label: "Dashboard", path: "/admin/dashboard", icon: DashboardRounded },
     { label: "Users", path: "/admin/users", icon: GroupRounded },
-    { label: "Divisions", path: "/admin/master/divisions", icon: ApartmentRounded },
-    { label: "Departments", path: "/admin/master/departments", icon: AccountTreeRounded },
+    {
+      label: "Divisions",
+      path: "/admin/master/divisions",
+      icon: ApartmentRounded,
+    },
+    {
+      label: "Departments",
+      path: "/admin/master/departments",
+      icon: AccountTreeRounded,
+    },
   ],
   "Jastip Coordinator": [
     { label: "Dashboard", path: "/jastip/dashboard", icon: DashboardRounded },
-    { label: "Session", path: "/jastip/sessions", icon: ViewListRounded },
-    { label: "Vendors", path: "/jastip/master/vendors", icon: StoreMallDirectoryRounded },
-    { label: "Menus", path: "/jastip/master/menus", icon: RestaurantMenuRounded },
+    { label: "Sesi Aktif", path: "/jastip/sessions", icon: ViewListRounded },
+    {
+      label: "Riwayat Sesi",
+      path: "/jastip/sessions/history",
+      icon: HistoryRounded,
+    },
+    {
+      label: "Vendors",
+      path: "/jastip/master/vendors",
+      icon: StoreMallDirectoryRounded,
+    },
+    {
+      label: "Menus",
+      path: "/jastip/master/menus",
+      icon: RestaurantMenuRounded,
+    },
     { label: "Orders", path: "/jastip/orders", icon: ReceiptLongRounded },
     { label: "Payments", path: "/jastip/payments", icon: PaymentsRounded },
-    { label: "Vendor Dispatch", path: "/jastip/vendor-dispatch", icon: LocalShippingRounded },
+    {
+      label: "Vendor Dispatch",
+      path: "/jastip/vendor-dispatch",
+      icon: LocalShippingRounded,
+    },
   ],
   "Business Coordinator": [
-    { label: "Kategori", path: "/retail/master/categories", icon: CategoryRounded },
-    { label: "Subkategori", path: "/retail/master/subcategories", icon: AccountTreeRounded },
+    {
+      label: "Kategori",
+      path: "/retail/master/categories",
+      icon: CategoryRounded,
+    },
+    {
+      label: "Subkategori",
+      path: "/retail/master/subcategories",
+      icon: AccountTreeRounded,
+    },
     { label: "Brand", path: "/retail/master/brands", icon: BusinessRounded },
-    { label: "Produk", path: "/retail/master/products", icon: Inventory2Rounded },
-    { label: "Supplier", path: "/retail/master/suppliers", icon: LocalShippingRounded },
-    { label: "Pembelian", path: "/retail/master/purchases", icon: ReceiptRounded },
-    { label: "Penjualan", path: "/retail/master/sales", icon: PointOfSaleRounded },
+    {
+      label: "Produk",
+      path: "/retail/master/products",
+      icon: Inventory2Rounded,
+    },
+    {
+      label: "Supplier",
+      path: "/retail/master/suppliers",
+      icon: LocalShippingRounded,
+    },
+    {
+      label: "Pembelian",
+      path: "/retail/master/purchases",
+      icon: ReceiptRounded,
+    },
+    {
+      label: "Penjualan",
+      path: "/retail/master/sales",
+      icon: PointOfSaleRounded,
+    },
     { label: "Inventory", path: "/retail/master/inventory", icon: TuneRounded },
   ],
   "Cooperative Member": [
@@ -70,16 +119,26 @@ const SidebarContent = ({ items = [], onNavigate }) => (
   <Box sx={{ height: "100%", backgroundColor: "#FFFFFF" }}>
     <Toolbar sx={{ minHeight: 72, px: 2.5 }}>
       <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-        <Box sx={{ width: 40, height: 40, borderRadius: 2, display: "grid", placeItems: "center", color: "#FFFFFF", backgroundColor: "#E85D75" }}>
+        <Box
+          sx={{
+            width: 40,
+            height: 40,
+            borderRadius: 2,
+            display: "grid",
+            placeItems: "center",
+            color: "#FFFFFF",
+            backgroundColor: "#E85D75",
+          }}
+        >
           <StorageRounded />
         </Box>
         <Box>
           <Typography variant="subtitle1" fontWeight={800} color="#7A2E3A">
             Koperasi 245
           </Typography>
-          <Typography variant="caption" color="text.secondary">
+          {/* <Typography variant="caption" color="text.secondary">
             Admin Panel
-          </Typography>
+          </Typography> */}
         </Box>
       </Box>
     </Toolbar>
@@ -109,7 +168,10 @@ const SidebarContent = ({ items = [], onNavigate }) => (
             <ListItemIcon sx={{ minWidth: 40, color: "#8A6A72" }}>
               <Icon />
             </ListItemIcon>
-            <ListItemText primary={item.label} primaryTypographyProps={{ fontWeight: 700, fontSize: 14 }} />
+            <ListItemText
+              primary={item.label}
+              primaryTypographyProps={{ fontWeight: 700, fontSize: 14 }}
+            />
           </ListItemButton>
         );
       })}
@@ -130,7 +192,10 @@ const Sidebar = ({ mobileOpen, onClose }) => {
         ModalProps={{ keepMounted: true }}
         sx={{
           display: { xs: "block", md: "none" },
-          "& .MuiDrawer-paper": { width: drawerWidth, borderRight: "1px solid #F9D5DC" },
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            borderRight: "1px solid #F9D5DC",
+          },
         }}
       >
         <SidebarContent items={items} onNavigate={onClose} />
@@ -141,7 +206,11 @@ const Sidebar = ({ mobileOpen, onClose }) => {
           display: { xs: "none", md: "block" },
           width: drawerWidth,
           flexShrink: 0,
-          "& .MuiDrawer-paper": { width: drawerWidth, boxSizing: "border-box", borderRight: "1px solid #F9D5DC" },
+          "& .MuiDrawer-paper": {
+            width: drawerWidth,
+            boxSizing: "border-box",
+            borderRight: "1px solid #F9D5DC",
+          },
         }}
         open
       >

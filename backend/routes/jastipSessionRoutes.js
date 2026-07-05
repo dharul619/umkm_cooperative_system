@@ -8,5 +8,6 @@ router.post("/with-menus", auth, authorize(["Jastip Coordinator"]), c.createWith
 router.get("/:id", auth, authorize(["Jastip Coordinator"]), c.getById);
 router.post("/", auth, authorize(["Jastip Coordinator"]), c.create);
 router.put("/:id/close", auth, authorize(["Jastip Coordinator"]), c.closeSession);
+router.patch("/:id/status", auth, authorize(["Jastip Coordinator"]), c.updateSessionStatus);
 
 module.exports = router;

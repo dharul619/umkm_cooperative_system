@@ -1,6 +1,7 @@
-﻿const sessionModel = require("../models/jastipSessionModel");
+const sessionModel = require("../models/jastipSessionModel");
 const sessionMenuModel = require("../models/jastipSessionMenuModel");
 const orderModel = require("../models/jastipOrderModel");
+const vendorOrderController = require("./vendorOrderController");
 
 exports.getAll = async (req, res) => {
   try {
@@ -89,10 +90,29 @@ exports.createWithMenus = async (req, res) => {
 
 exports.closeSession = async (req, res) => {
   try {
-    await sessionModel.closeSession(req.params.id);
-    res.json({ message: "Jastip session closed" });
+    const sessionId = req.params.id;
+    const [rows] = await sessionModel.getById(sessionId);
+    const session = rows[0];
+    if (!session) {
+      return res.status(404).json({ message: "Sesi tidak ditemukan" });
+    }
+
+    if (session.status !== "OPEN") {
+      return res.status(400).json({ message: "Sesi sudah tidak OPEN" });
+    }
+
+    if (Number(session.order_count || 0) === 0) {
+      return res.status(400).json({ message: "Tidak bisa menutup sesi karena belum ada pesanan member" });
+    }
+
+    await sessionModel.updateStatus(sessionId, "CONFIRMED");
+    // Generate vendor orders
+    await vendorOrderController.generateVendorOrdersInternal(sessionId);
+
+    res.json({ message: "Sesi jastip berhasil ditutup dan rekap vendor telah digenerate" });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("closeSession error:", err);
+    res.status(500).json({ message: err.message || "Gagal menutup sesi jastip" });
   }
 };
 
@@ -141,6 +161,51 @@ exports.getMyOrders = async (req, res) => {
   } catch (err) {
     console.error("getMyOrders error:", err);
     res.status(500).json({ message: err.message });
+  }
+};
+
+exports.updateSessionStatus = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { status } = req.body;
+
+    const validStatuses = ["OPEN", "CONFIRMED", "ORDERED", "DELIVERED", "DONE", "CANCELLED"];
+    if (!validStatuses.includes(status)) {
+      return res.status(400).json({ message: "Status tidak valid" });
+    }
+
+    const [rows] = await sessionModel.getById(id);
+    const session = rows[0];
+    if (!session) {
+      return res.status(404).json({ message: "Sesi tidak ditemukan" });
+    }
+
+    const currentStatus = session.status;
+    let allowed = false;
+
+    if (currentStatus === "OPEN" && (status === "CONFIRMED" || status === "CANCELLED")) allowed = true;
+    else if (currentStatus === "CONFIRMED" && (status === "ORDERED" || status === "CANCELLED")) allowed = true;
+    else if (currentStatus === "ORDERED" && (status === "DELIVERED" || status === "CANCELLED")) allowed = true;
+    else if (currentStatus === "DELIVERED" && (status === "DONE")) allowed = true;
+
+    if (!allowed) {
+      return res.status(400).json({ message: `Transisi status tidak sah dari ${currentStatus} ke ${status}` });
+    }
+
+    if (status === "CONFIRMED") {
+      if (Number(session.order_count || 0) === 0) {
+        return res.status(400).json({ message: "Tidak bisa menutup sesi karena belum ada pesanan member" });
+      }
+      await sessionModel.updateStatus(id, "CONFIRMED");
+      await vendorOrderController.generateVendorOrdersInternal(id);
+    } else {
+      await sessionModel.updateStatus(id, status);
+    }
+
+    res.json({ message: `Status sesi berhasil diubah menjadi ${status}` });
+  } catch (err) {
+    console.error("updateSessionStatus error:", err);
+    res.status(500).json({ message: err.message || "Gagal mengubah status sesi" });
   }
 };
 

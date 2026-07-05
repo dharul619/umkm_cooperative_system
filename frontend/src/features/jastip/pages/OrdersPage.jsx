@@ -1,6 +1,7 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import AssignmentRounded from "@mui/icons-material/AssignmentRounded";
 import RefreshRounded from "@mui/icons-material/RefreshRounded";
+import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import { Chip, Grid, MenuItem, Stack, Typography } from "@mui/material";
 import {
   AppButton,
@@ -10,8 +11,10 @@ import {
   SectionToolbar,
   StatusAlert,
   DataTable,
+  ConfirmModal,
 } from "../../../shared/components";
 import { useJastipOrders } from "../hooks/useJastipOrders";
+import { jastipService } from "../services/jastipService";
 
 const paymentTone = {
   PENDING: "warning",
@@ -38,11 +41,32 @@ const formatDateOnly = (value) => {
 };
 
 const OrdersPage = () => {
-  const { orders, loading, error, refresh } = useJastipOrders();
+  const { orders, loading, error: fetchError, refresh } = useJastipOrders();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [success, setSuccess] = useState("");
+  const [error, setError] = useState("");
+  const [settleTarget, setSettleTarget] = useState(null);
+  const [saving, setSaving] = useState(false);
+
+  const displayError = fetchError || error;
+
+  const handleSettle = async () => {
+    if (!settleTarget || !settleTarget.payment_id) return;
+    try {
+      setSaving(true);
+      setError("");
+      await jastipService.settlePayment(settleTarget.payment_id);
+      setSuccess(`Pembayaran tunai untuk order ${settleTarget.member_name} berhasil dikonfirmasi.`);
+      setSettleTarget(null);
+      await refresh();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Gagal mengonfirmasi lunas");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const filteredOrders = useMemo(() => {
     const keyword = search.trim().toLowerCase();
@@ -113,7 +137,7 @@ const OrdersPage = () => {
         }
       />
 
-      <StatusAlert severity="error">{error}</StatusAlert>
+      <StatusAlert severity="error">{displayError}</StatusAlert>
       <StatusAlert severity="success" show={!!success} onClose={() => setSuccess("")}>{success}</StatusAlert>
 
       <AppCard contentSx={{ p: { xs: 2, md: 3 }, "&:last-child": { pb: { xs: 2, md: 3 } } }}>
@@ -170,6 +194,15 @@ const OrdersPage = () => {
           loading={loading}
           emptyTitle="Belum ada order"
           emptyDescription="Order yang masuk ke sesi jastip akan muncul di sini."
+          actions={[
+            {
+              label: "Tandai Lunas",
+              icon: CheckCircleRounded,
+              color: "success",
+              onClick: (row) => setSettleTarget(row),
+              show: (row) => row.payment_method === "CASH" && row.payment_status === "PENDING",
+            },
+          ]}
         />
       </AppCard>
 
@@ -220,6 +253,17 @@ const OrdersPage = () => {
           </AppCard>
         </Grid>
       </Grid>
+
+      <ConfirmModal
+        open={!!settleTarget}
+        title="Tandai Lunas"
+        description={`Konfirmasi bahwa ${settleTarget?.member_name} telah membayar tunai untuk sesi jastip ini?`}
+        confirmText="Tandai Lunas"
+        tone="success"
+        loading={saving}
+        onClose={() => setSettleTarget(null)}
+        onConfirm={handleSettle}
+      />
     </>
   );
 };

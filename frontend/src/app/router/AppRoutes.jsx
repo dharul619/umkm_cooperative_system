@@ -1,4 +1,4 @@
-﻿import { Routes, Route, Navigate } from "react-router-dom";
+import { Routes, Route, Navigate } from "react-router-dom";
 import LoginPage from "../../features/auth/pages/LoginPage";
 import RegisterPage from "../../features/auth/pages/RegisterPage";
 import ProtectedRoute from "./ProtectedRoute";
@@ -9,6 +9,7 @@ import CoordinatorDashboard from "../../features/jastip/pages/CoordinatorDashboa
 import SessionPage from "../../features/jastip/pages/SessionPage";
 import CreateSessionPage from "../../features/jastip/pages/CreateSessionPage";
 import SessionDetailPage from "../../features/jastip/pages/SessionDetailPage";
+import SessionHistoryPage from "../../features/jastip/pages/SessionHistoryPage";
 import OrdersPage from "../../features/jastip/pages/OrdersPage";
 import MemberJastipPage from "../../features/jastip/pages/MemberJastipPage";
 import MemberOrderHistoryPage from "../../features/jastip/pages/MemberOrderHistoryPage";
@@ -70,6 +71,7 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<CoordinatorDashboard />} />
         <Route path="sessions" element={<SessionPage />} />
         <Route path="sessions/create" element={<CreateSessionPage />} />
+        <Route path="sessions/history" element={<SessionHistoryPage />} />
         <Route path="sessions/:id" element={<SessionDetailPage />} />
         <Route path="open-session" element={<Navigate to="/jastip/sessions" replace />} />
         <Route path="orders" element={<OrdersPage />} />

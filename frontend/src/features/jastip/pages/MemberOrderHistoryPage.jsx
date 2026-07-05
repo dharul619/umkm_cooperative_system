@@ -4,8 +4,9 @@ import RefreshRounded from "@mui/icons-material/RefreshRounded";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRounded from "@mui/icons-material/ExpandLessRounded";
 import DownloadRounded from "@mui/icons-material/DownloadRounded";
-import ReceiptLongRounded from "@mui/icons-material/ReceiptLongRounded";
-import { Box, Chip, Collapse, Grid, MenuItem, Stack, Typography } from "@mui/material";
+import EditRounded from "@mui/icons-material/EditRounded";
+import DeleteRounded from "@mui/icons-material/DeleteRounded";
+import { Box, Chip, Collapse, Grid, MenuItem, Stack, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button, TextField } from "@mui/material";
 import { jsPDF } from "jspdf";
 import {
   AppButton,
@@ -15,9 +16,11 @@ import {
   PageHeader,
   SectionToolbar,
   StatusAlert,
+  ConfirmModal
 } from "../../../shared/components";
 import { useMemberJastip } from "../hooks/useMemberJastip";
 import { useAuth } from "../../auth/hooks/useAuth";
+import { jastipService } from "../services/jastipService";
 
 const orderStatusTone = {
   OPEN: "info",
@@ -89,11 +92,19 @@ const groupSessionOrders = (orders) => {
 const MemberOrderHistoryPage = () => {
   const { user } = useAuth();
   const memberId = Number(user?.id);
-  const { myOrders, loading, error, refresh } = useMemberJastip(memberId);
+  const { myOrders, loading, error: fetchError, refresh } = useMemberJastip(memberId);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [paymentFilter, setPaymentFilter] = useState("all");
   const [expandedSessionId, setExpandedSessionId] = useState(null);
+  const [editTarget, setEditTarget] = useState(null);
+  const [editQty, setEditQty] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState(null);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+
+  const displayError = fetchError || error;
 
   const groupedSessions = useMemo(() => groupSessionOrders(myOrders), [myOrders]);
 
@@ -120,6 +131,55 @@ const MemberOrderHistoryPage = () => {
     { field: "subtotal", headerName: "Subtotal", minWidth: 130, render: (value) => formatCurrency(value) },
     { field: "profit", headerName: "Profit", minWidth: 130, render: (value) => formatCurrency(value) },
   ];
+
+  const handleEditQtyClick = (row) => {
+    setEditTarget(row);
+    setEditQty(row.qty);
+  };
+
+  const handleSaveQty = async () => {
+    if (!editTarget) return;
+    const qtyNum = Number(editQty);
+    if (!qtyNum || qtyNum <= 0) {
+      setError("Kuantitas harus lebih dari 0");
+      return;
+    }
+
+    try {
+      setSaving(true);
+      setError("");
+      setSuccess("");
+      await jastipService.updateOrderDetail(editTarget.id, qtyNum);
+      setSuccess("Kuantitas pesanan berhasil diubah.");
+      setEditTarget(null);
+      await refresh();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Gagal mengubah pesanan");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDeleteClick = (row) => {
+    setDeleteTarget(row);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deleteTarget) return;
+    try {
+      setSaving(true);
+      setError("");
+      setSuccess("");
+      await jastipService.deleteOrderDetail(deleteTarget.id);
+      setSuccess("Item pesanan berhasil dihapus.");
+      setDeleteTarget(null);
+      await refresh();
+    } catch (err) {
+      setError(err.response?.data?.message || err.message || "Gagal menghapus pesanan");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const downloadPdf = (session) => {
     const pdf = new jsPDF();
@@ -187,7 +247,8 @@ const MemberOrderHistoryPage = () => {
         }
       />
 
-      <StatusAlert severity="error">{error}</StatusAlert>
+      <StatusAlert severity="error">{displayError}</StatusAlert>
+      <StatusAlert severity="success" show={!!success} onClose={() => setSuccess("")}>{success}</StatusAlert>
 
       <AppCard contentSx={{ p: { xs: 2, md: 3 }, "&:last-child": { pb: { xs: 2, md: 3 } } }}>
         <SectionToolbar
@@ -244,6 +305,7 @@ const MemberOrderHistoryPage = () => {
           {filteredSessions.map((session) => {
             const expanded = String(expandedSessionId) === String(session.order_id);
             const proofPayment = session.menus.find((item) => item.payment_status === "SETTLED") || session.menus[0] || null;
+            const canModify = session.session_status === "OPEN" && !["SETTLED", "PROCESSING"].includes(session.payment_status);
 
             return (
               <AppCard key={session.order_id} sx={{ border: "1px solid #F9D5DC" }}>
@@ -319,6 +381,22 @@ const MemberOrderHistoryPage = () => {
                       loading={loading}
                       emptyTitle="Tidak ada detail"
                       emptyDescription="Detail order untuk session ini belum tersedia."
+                      actions={[
+                        {
+                          label: "Ubah Qty",
+                          icon: EditRounded,
+                          color: "primary",
+                          onClick: (row) => handleEditQtyClick(row),
+                          show: () => canModify,
+                        },
+                        {
+                          label: "Hapus",
+                          icon: DeleteRounded,
+                          color: "error",
+                          onClick: (row) => handleDeleteClick(row),
+                          show: () => canModify,
+                        }
+                      ]}
                     />
 
                     <Box sx={{ mt: 2, p: 2, borderRadius: 1, border: "1px solid", borderColor: "divider", backgroundColor: "#FFFDFC" }}>
@@ -354,6 +432,40 @@ const MemberOrderHistoryPage = () => {
           })}
         </Stack>
       </AppCard>
+
+      {/* Edit Quantity Dialog */}
+      <Dialog open={!!editTarget} onClose={() => setEditTarget(null)}>
+        <DialogTitle sx={{ fontWeight: 800, color: "#7A2E3A" }}>Ubah Jumlah Pesanan</DialogTitle>
+        <DialogContent sx={{ minWidth: 300, pt: 1 }}>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+            Masukkan jumlah pesanan baru untuk <strong>{editTarget?.menu_name}</strong>:
+          </Typography>
+          <TextField
+            fullWidth
+            type="number"
+            label="Kuantitas"
+            value={editQty}
+            onChange={(e) => setEditQty(e.target.value)}
+            inputProps={{ min: 1 }}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditTarget(null)} disabled={saving}>Batal</Button>
+          <Button onClick={handleSaveQty} disabled={saving} variant="contained" color="primary">Simpan</Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Delete Item Confirmation Modal */}
+      <ConfirmModal
+        open={!!deleteTarget}
+        title="Hapus Item Pesanan"
+        description={`Apakah Anda yakin ingin menghapus ${deleteTarget?.menu_name} dari pesanan Anda?`}
+        confirmText="Hapus"
+        tone="error"
+        loading={saving}
+        onClose={() => setDeleteTarget(null)}
+        onConfirm={handleConfirmDelete}
+      />
     </>
   );
 };
