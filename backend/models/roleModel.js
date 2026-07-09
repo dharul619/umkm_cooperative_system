@@ -15,3 +15,16 @@ exports.update = (id, data) => {
 exports.delete = (id) => {
   return db.promise().query("DELETE FROM roles WHERE id=?", [id]);
 };
+
+// Check if role is in use
+exports.getReferenceCount = async (id) => {
+  const [users] = await db.promise().query(
+    "SELECT COUNT(*) as count FROM users WHERE role_id = ?",
+    [id]
+  );
+  return {
+    exists: true,
+    referenceCount: users[0]?.count || 0,
+    canDelete: (users[0]?.count || 0) === 0,
+  };
+};

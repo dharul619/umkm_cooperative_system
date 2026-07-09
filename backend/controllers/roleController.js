@@ -16,6 +16,23 @@ exports.update = async (req, res) => {
 };
 
 exports.delete = async (req, res) => {
-  await model.delete(req.params.id);
-  res.json({ message: "Role deleted" });
+  try {
+    const { id } = req.params;
+
+    // Check referential integrity
+    const refCount = await model.getReferenceCount(id);
+
+    if (!refCount.canDelete) {
+      return res.status(409).json({
+        success: false,
+        message: `Tidak dapat menghapus role. Sedang digunakan oleh ${refCount.referenceCount} user(s).`,
+      });
+    }
+
+    await model.delete(id);
+    res.json({ success: true, message: "Role deleted" });
+  } catch (err) {
+    console.error("delete role error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
 };

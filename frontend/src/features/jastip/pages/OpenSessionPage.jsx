@@ -194,19 +194,13 @@ const OpenSessionPage = () => {
   };
 
   const menuColumns = [
-    { field: "menu_name", headerName: "Menu", minWidth: 220 },
-    { field: "vendor_name", headerName: "Vendor", minWidth: 180 },
-    { field: "notes", headerName: "Notes", minWidth: 200 },
-    {
-      field: "base_price",
-      headerName: "Harga Pokok",
-      minWidth: 140,
-      render: (value) => formatCurrency(value),
-    },
+    { field: "menu_name", headerName: "Menu", minWidth: 200 },
+    { field: "vendor_name", headerName: "Vendor", minWidth: 150 },
+    { field: "notes", headerName: "Catatan", minWidth: 150 },
     {
       field: "jastip_price",
-      headerName: "Harga Jastip",
-      minWidth: 140,
+      headerName: "Harga",
+      minWidth: 120,
       render: (value) => formatCurrency(value),
     },
   ];

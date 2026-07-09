@@ -4,7 +4,18 @@ import RegisterPage from "../../features/auth/pages/RegisterPage";
 import ProtectedRoute from "./ProtectedRoute";
 import RoleRoute from "./RoleRoute";
 import AdminLayout from "../layouts/AdminLayout";
-import AdminDashboard from "../../features/dashboard/pages/AdminDashboard";
+import AdminDashboard from "../../features/admin/pages/AdminDashboard";
+import ActivityLogPage from "../../features/admin/pages/ActivityLogPage";
+import ReportsPage from "../../features/admin/pages/ReportsPage";
+import PenjualanRetailPage from "../../features/admin/pages/reports/PenjualanRetailPage";
+import StokRetailPage from "../../features/admin/pages/reports/StokRetailPage";
+import PembelianRetailPage from "../../features/admin/pages/reports/PembelianRetailPage";
+import SHURetailPage from "../../features/admin/pages/reports/SHURetailPage";
+import JastipSesiPage from "../../features/admin/pages/reports/JastipSesiPage";
+import JastipVendorPage from "../../features/admin/pages/reports/JastipVendorPage";
+import JastipMemberPage from "../../features/admin/pages/reports/JastipMemberPage";
+import PembayaranJastipPage from "../../features/admin/pages/reports/PembayaranJastipPage";
+import SHUJastipPage from "../../features/admin/pages/reports/SHUJastipPage";
 import CoordinatorDashboard from "../../features/jastip/pages/CoordinatorDashboard";
 import SessionPage from "../../features/jastip/pages/SessionPage";
 import CreateSessionPage from "../../features/jastip/pages/CreateSessionPage";
@@ -62,6 +73,18 @@ const AppRoutes = () => {
         <Route index element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<UserPages />} />
+        <Route path="activity-logs" element={<ActivityLogPage />} />
+        <Route path="reports" element={<ReportsPage />}>
+          <Route path="retail/penjualan" element={<PenjualanRetailPage />} />
+          <Route path="retail/stok" element={<StokRetailPage />} />
+          <Route path="retail/pembelian" element={<PembelianRetailPage />} />
+          <Route path="retail/shu" element={<SHURetailPage />} />
+          <Route path="jastip/sesi" element={<JastipSesiPage />} />
+          <Route path="jastip/vendor" element={<JastipVendorPage />} />
+          <Route path="jastip/member" element={<JastipMemberPage />} />
+          <Route path="jastip/pembayaran" element={<PembayaranJastipPage />} />
+          <Route path="jastip/shu" element={<SHUJastipPage />} />
+        </Route>
         <Route path="master/divisions" element={<DivisionPage />} />
         <Route path="master/departments" element={<DepartmentPage />} />
       </Route>

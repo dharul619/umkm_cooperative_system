@@ -53,6 +53,26 @@ exports.getById = async (id) => {
   return rows[0] || null;
 };
 
+exports.getBySessionId = async (sessionId) => {
+  const [rows] = await db.promise().query(
+    `${buildPaymentSelect}
+     WHERE p.order_id = ?
+     ORDER BY p.created_at DESC`,
+    [sessionId],
+  );
+  return rows;
+};
+
+exports.getFailedPaymentsBySessionId = async (sessionId) => {
+  const [rows] = await db.promise().query(
+    `${buildPaymentSelect}
+     WHERE p.order_id = ? AND p.state IN ('FAILED', 'EXPIRED')
+     ORDER BY p.created_at DESC`,
+    [sessionId],
+  );
+  return rows;
+};
+
 exports.create = async ({ order_id, member_id, amount, payment_method, state, external_reference, expires_at }) => {
   return db.promise().query("INSERT INTO payments SET ?", {
     id: crypto.randomUUID(),

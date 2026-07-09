@@ -149,7 +149,7 @@ const SessionPage = () => {
       ) : openSessions.length > 0 ? (
         <Grid container spacing={3}>
           {openSessions.map((session) => (
-            <Grid item xs={12} md={8} lg={6} key={session.id}>
+            <Grid item xs={12} sm={6} lg={4} key={session.id}>
               <AppCard
                 sx={{
                   border: "1px solid #F9D5DC",
@@ -168,6 +168,8 @@ const SessionPage = () => {
                     justifyContent: "space-between",
                     alignItems: "center",
                     mb: 2,
+                    flexWrap: "wrap",
+                    gap: 1,
                   }}
                 >
                   <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
@@ -176,9 +178,9 @@ const SessionPage = () => {
                         width: 8,
                         height: 8,
                         borderRadius: "50%",
-                        bgcolor: statusMeta[session.status]?.color || "#757575",
+                        bgcolor: session.failed_payment_count > 0 ? "#E65100" : (statusMeta[session.status]?.color || "#757575"),
                         animation:
-                          session.status === "OPEN"
+                          session.status === "OPEN" && session.failed_payment_count === 0
                             ? `${pulseAnimation} 2s infinite ease-in-out`
                             : undefined,
                       }}
@@ -186,20 +188,33 @@ const SessionPage = () => {
                     <Typography
                       variant="subtitle2"
                       fontWeight={800}
-                      color={statusMeta[session.status]?.color || "#757575"}
+                      color={session.failed_payment_count > 0 ? "#E65100" : (statusMeta[session.status]?.color || "#757575")}
                     >
                       {statusMeta[session.status]?.label || session.status}
                     </Typography>
                   </Box>
-                  <Chip
-                    label={statusLabel[session.status] || session.status}
-                    size="small"
-                    sx={{
-                      bgcolor: statusMeta[session.status]?.bg || "#e0e0e0",
-                      color: statusMeta[session.status]?.color || "#757575",
-                      fontWeight: 700,
-                    }}
-                  />
+                  {session.failed_payment_count > 0 && session.status === "OPEN" ? (
+                    <Chip
+                      label={`${session.failed_payment_count} gagal`}
+                      size="small"
+                      sx={{
+                        bgcolor: "#FFF3E0",
+                        color: "#E65100",
+                        border: "1px solid #FFB74D",
+                        fontWeight: 700,
+                      }}
+                    />
+                  ) : (
+                    <Chip
+                      label={statusLabel[session.status] || session.status}
+                      size="small"
+                      sx={{
+                        bgcolor: statusMeta[session.status]?.bg || "#e0e0e0",
+                        color: statusMeta[session.status]?.color || "#757575",
+                        fontWeight: 700,
+                      }}
+                    />
+                  )}
                 </Box>
 
                 {/* Date */}
@@ -236,106 +251,113 @@ const SessionPage = () => {
                     <Box
                       sx={{
                         display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 0.5,
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        gap: 0.5,
                       }}
                     >
-                      <RestaurantMenuRounded
-                        sx={{ color: "#C93F58", fontSize: 18 }}
-                      />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                        <RestaurantMenuRounded sx={{ color: "#C93F58", fontSize: 16 }} />
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          fontWeight={700}
+                          sx={{ fontSize: "0.65rem", letterSpacing: 0.3 }}
+                        >
+                          MENU
+                        </Typography>
+                      </Box>
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        fontWeight={700}
+                        variant="h6"
+                        fontWeight={800}
+                        color="#7A2E3A"
+                        sx={{ lineHeight: 1.2 }}
                       >
-                        MENU
+                        {session.menu_count || 0}
                       </Typography>
                     </Box>
-                    <Typography
-                      variant="body1"
-                      fontWeight={800}
-                      color="#7A2E3A"
-                    >
-                      {session.menu_count || 0}
-                    </Typography>
                   </Grid>
 
                   <Grid item xs={4}>
                     <Box
                       sx={{
                         display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 0.5,
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        gap: 0.5,
                       }}
                     >
-                      <StorefrontRounded
-                        sx={{ color: "#C93F58", fontSize: 18 }}
-                      />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                        <StorefrontRounded sx={{ color: "#C93F58", fontSize: 16 }} />
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          fontWeight={700}
+                          sx={{ fontSize: "0.65rem", letterSpacing: 0.3 }}
+                        >
+                          VENDOR
+                        </Typography>
+                      </Box>
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        fontWeight={700}
+                        variant="h6"
+                        fontWeight={800}
+                        color="#7A2E3A"
+                        sx={{ lineHeight: 1.2 }}
                       >
-                        VENDOR
+                        {session.vendor_count || 0}
                       </Typography>
                     </Box>
-                    <Typography
-                      variant="body1"
-                      fontWeight={800}
-                      color="#7A2E3A"
-                    >
-                      {session.vendor_count || 0}
-                    </Typography>
                   </Grid>
 
                   <Grid item xs={4}>
                     <Box
                       sx={{
                         display: "flex",
-                        alignItems: "center",
-                        gap: 1,
-                        mb: 0.5,
+                        flexDirection: "column",
+                        alignItems: "flex-start",
+                        gap: 0.5,
                       }}
                     >
-                      <ShoppingCartRounded
-                        sx={{ color: "#C93F58", fontSize: 18 }}
-                      />
+                      <Box sx={{ display: "flex", alignItems: "center", gap: 0.75 }}>
+                        <ShoppingCartRounded sx={{ color: "#C93F58", fontSize: 16 }} />
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          fontWeight={700}
+                          sx={{ fontSize: "0.65rem", letterSpacing: 0.3 }}
+                        >
+                          ORDER
+                        </Typography>
+                      </Box>
                       <Typography
-                        variant="caption"
-                        color="text.secondary"
-                        fontWeight={700}
+                        variant="h6"
+                        fontWeight={800}
+                        color="#7A2E3A"
+                        sx={{ lineHeight: 1.2 }}
                       >
-                        ORDER
+                        {session.order_count || 0}
                       </Typography>
                     </Box>
-                    <Typography
-                      variant="body1"
-                      fontWeight={800}
-                      color="#7A2E3A"
-                    >
-                      {session.order_count || 0}
-                    </Typography>
                   </Grid>
                 </Grid>
 
                 <Divider sx={{ mb: 2.5, borderColor: "#FDE8EC" }} />
 
                 {/* Actions */}
-                <Stack direction="row" spacing={2}>
+                <Stack direction={{ xs: "column", sm: "row" }} spacing={1.5}>
                   <AppButton
                     variant="contained"
-                    fullWidth={session.status !== "OPEN"}
+                    fullWidth
                     startIcon={<OpenInNewRounded />}
                     onClick={() => navigate(`/jastip/sessions/${session.id}`)}
                   >
-                    Buka Detail & Kelola
+                    Buka Detail
                   </AppButton>
                   {session.status === "OPEN" && (
                     <AppButton
                       variant="outlined"
                       color="warning"
+                      fullWidth
                       startIcon={<LockRounded />}
                       onClick={() => setCloseTarget(session)}
                     >

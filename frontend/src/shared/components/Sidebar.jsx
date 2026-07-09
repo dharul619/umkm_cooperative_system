@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { NavLink } from "react-router-dom";
 import {
   Box,
@@ -9,18 +10,17 @@ import {
   ListItemText,
   Toolbar,
   Typography,
+  Collapse,
 } from "@mui/material";
 import DashboardRounded from "@mui/icons-material/DashboardRounded";
 import GroupRounded from "@mui/icons-material/GroupRounded";
-import StorefrontRounded from "@mui/icons-material/StorefrontRounded";
 import ApartmentRounded from "@mui/icons-material/ApartmentRounded";
 import AccountTreeRounded from "@mui/icons-material/AccountTreeRounded";
 import RestaurantMenuRounded from "@mui/icons-material/RestaurantMenuRounded";
 import StoreMallDirectoryRounded from "@mui/icons-material/StoreMallDirectoryRounded";
-import StorageRounded from "@mui/icons-material/StorageRounded";
+import CooperativeLogo from "./CooperativeLogo";
 import ReceiptLongRounded from "@mui/icons-material/ReceiptLongRounded";
 import PaymentsRounded from "@mui/icons-material/PaymentsRounded";
-import LocalShippingRounded from "@mui/icons-material/LocalShippingRounded";
 import ShoppingBagRounded from "@mui/icons-material/ShoppingBagRounded";
 import HistoryRounded from "@mui/icons-material/HistoryRounded";
 import ViewListRounded from "@mui/icons-material/ViewListRounded";
@@ -30,6 +30,11 @@ import Inventory2Rounded from "@mui/icons-material/Inventory2Rounded";
 import ReceiptRounded from "@mui/icons-material/ReceiptRounded";
 import PointOfSaleRounded from "@mui/icons-material/PointOfSaleRounded";
 import TuneRounded from "@mui/icons-material/TuneRounded";
+import HistoryEduRounded from "@mui/icons-material/HistoryEduRounded";
+import AssessmentRounded from "@mui/icons-material/AssessmentRounded";
+import LocalShippingRounded from "@mui/icons-material/LocalShippingRounded";
+import ExpandLessRounded from "@mui/icons-material/ExpandLessRounded";
+import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 
 export const drawerWidth = 264;
@@ -37,16 +42,20 @@ export const drawerWidth = 264;
 const roleItems = {
   "System Administrator": [
     { label: "Dashboard", path: "/admin/dashboard", icon: DashboardRounded },
-    { label: "Users", path: "/admin/users", icon: GroupRounded },
     {
-      label: "Divisions",
-      path: "/admin/master/divisions",
-      icon: ApartmentRounded,
+      label: "Users Management",
+      icon: GroupRounded,
+      children: [
+        { label: "Users", path: "/admin/users", icon: GroupRounded },
+        { label: "Divisions", path: "/admin/master/divisions", icon: ApartmentRounded },
+        { label: "Departments", path: "/admin/master/departments", icon: AccountTreeRounded },
+      ],
     },
+    { label: "Laporan", path: "/admin/reports", icon: AssessmentRounded },
     {
-      label: "Departments",
-      path: "/admin/master/departments",
-      icon: AccountTreeRounded,
+      label: "Log Aktivitas",
+      path: "/admin/activity-logs",
+      icon: HistoryEduRounded,
     },
   ],
   "Jastip Coordinator": [
@@ -69,11 +78,6 @@ const roleItems = {
     },
     { label: "Orders", path: "/jastip/orders", icon: ReceiptLongRounded },
     { label: "Payments", path: "/jastip/payments", icon: PaymentsRounded },
-    {
-      label: "Vendor Dispatch",
-      path: "/jastip/vendor-dispatch",
-      icon: LocalShippingRounded,
-    },
   ],
   "Business Coordinator": [
     {
@@ -115,69 +119,131 @@ const roleItems = {
   ],
 };
 
-const SidebarContent = ({ items = [], onNavigate }) => (
-  <Box sx={{ height: "100%", backgroundColor: "#FFFFFF" }}>
-    <Toolbar sx={{ minHeight: 72, px: 2.5 }}>
-      <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
-        <Box
-          sx={{
-            width: 40,
-            height: 40,
-            borderRadius: 2,
-            display: "grid",
-            placeItems: "center",
-            color: "#FFFFFF",
-            backgroundColor: "#E85D75",
-          }}
-        >
-          <StorageRounded />
-        </Box>
-        <Box>
-          <Typography variant="subtitle1" fontWeight={800} color="#7A2E3A">
-            Koperasi 245
-          </Typography>
-          {/* <Typography variant="caption" color="text.secondary">
-            Admin Panel
-          </Typography> */}
-        </Box>
-      </Box>
-    </Toolbar>
-    <Divider sx={{ borderColor: "#F9D5DC" }} />
-    <List sx={{ p: 1.5 }}>
-      {items.map((item) => {
-        const Icon = item.icon;
+const SidebarContent = ({ items = [], onNavigate }) => {
+  const [openMenus, setOpenMenus] = useState({
+    "Users Management": true, // Default open for admin
+  });
 
-        return (
-          <ListItemButton
-            key={item.path}
-            component={NavLink}
-            to={item.path}
-            onClick={onNavigate}
-            sx={{
-              mb: 0.5,
-              borderRadius: 1.5,
-              color: "#61414A",
-              "&.active": {
-                color: "#C93F58",
-                backgroundColor: "#FFF1F3",
-                "& .MuiListItemIcon-root": { color: "#C93F58" },
-              },
-              "&:hover": { backgroundColor: "#FFF6F8" },
-            }}
-          >
-            <ListItemIcon sx={{ minWidth: 40, color: "#8A6A72" }}>
-              <Icon />
-            </ListItemIcon>
-            <ListItemText
-              primary={item.label}
-              primaryTypographyProps={{ fontWeight: 700, fontSize: 14 }}
-            />
-          </ListItemButton>
-        );
-      })}
-    </List>
-  </Box>
-);
+  const handleToggle = (label) => {
+    setOpenMenus((prev) => ({
+      ...prev,
+      [label]: !prev[label],
+    }));
+  };
+
+  return (
+    <Box sx={{ height: "100%", backgroundColor: "#FFFFFF" }}>
+      <Toolbar sx={{ minHeight: 72, px: 2.5 }}>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
+          <CooperativeLogo size={40} />
+          <Box>
+            <Typography variant="subtitle1" fontWeight={800} color="#C93F58">
+              Koperasi 245
+            </Typography>
+          </Box>
+        </Box>
+      </Toolbar>
+      <Divider sx={{ borderColor: "#F9D5DC" }} />
+      <List sx={{ p: 1.5 }}>
+        {items.map((item) => {
+          const Icon = item.icon;
+          const isExpandable = !!item.children;
+          const isOpen = !!openMenus[item.label];
+
+          if (isExpandable) {
+            return (
+              <Box key={item.label} sx={{ mb: 0.5 }}>
+                <ListItemButton
+                  onClick={() => handleToggle(item.label)}
+                  sx={{
+                    borderRadius: 1.5,
+                    color: "#61414A",
+                    "&:hover": { backgroundColor: "#FFF6F8" },
+                  }}
+                >
+                  <ListItemIcon sx={{ minWidth: 40, color: "#8A6A72" }}>
+                    <Icon />
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.label}
+                    primaryTypographyProps={{ fontWeight: 700, fontSize: 14 }}
+                  />
+                  {isOpen ? (
+                    <ExpandLessRounded sx={{ color: "#8A6A72" }} />
+                  ) : (
+                    <ExpandMoreRounded sx={{ color: "#8A6A72" }} />
+                  )}
+                </ListItemButton>
+                <Collapse in={isOpen} timeout="auto" unmountOnExit>
+                  <List component="div" disablePadding sx={{ pl: 3.5, mt: 0.5 }}>
+                    {item.children.map((child) => {
+                      const ChildIcon = child.icon;
+                      return (
+                        <ListItemButton
+                          key={child.path}
+                          component={NavLink}
+                          to={child.path}
+                          onClick={onNavigate}
+                          sx={{
+                            mb: 0.5,
+                            borderRadius: 1.5,
+                            color: "#61414A",
+                            "&.active": {
+                              color: "#C93F58",
+                              backgroundColor: "#FFF1F3",
+                              "& .MuiListItemIcon-root": { color: "#C93F58" },
+                            },
+                            "&:hover": { backgroundColor: "#FFF6F8" },
+                          }}
+                        >
+                          <ListItemIcon sx={{ minWidth: 32, color: "#8A6A72" }}>
+                            <ChildIcon sx={{ fontSize: 18 }} />
+                          </ListItemIcon>
+                          <ListItemText
+                            primary={child.label}
+                            primaryTypographyProps={{ fontWeight: 700, fontSize: 13 }}
+                          />
+                        </ListItemButton>
+                      );
+                    })}
+                  </List>
+                </Collapse>
+              </Box>
+            );
+          }
+
+          return (
+            <ListItemButton
+              key={item.path}
+              component={NavLink}
+              to={item.path}
+              onClick={onNavigate}
+              sx={{
+                mb: 0.5,
+                borderRadius: 1.5,
+                color: "#61414A",
+                "&.active": {
+                  color: "#C93F58",
+                  backgroundColor: "#FFF1F3",
+                  "& .MuiListItemIcon-root": { color: "#C93F58" },
+                },
+                "&:hover": { backgroundColor: "#FFF6F8" },
+              }}
+            >
+              <ListItemIcon sx={{ minWidth: 40, color: "#8A6A72" }}>
+                <Icon />
+              </ListItemIcon>
+              <ListItemText
+                primary={item.label}
+                primaryTypographyProps={{ fontWeight: 700, fontSize: 14 }}
+              />
+            </ListItemButton>
+          );
+        })}
+      </List>
+    </Box>
+  );
+};
 
 const Sidebar = ({ mobileOpen, onClose }) => {
   const { user } = useAuth();

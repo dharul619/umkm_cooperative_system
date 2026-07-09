@@ -11,7 +11,14 @@ exports.getAll = async (req, res) => {
 
 exports.create = async (req, res) => {
   try {
-    await model.create(req.body);
+    // Auto-set base_price = jastip_price
+    // Profit sekarang murni dari operational fee, bukan dari selisih harga
+    const payload = { ...req.body };
+    if (payload.jastip_price !== undefined) {
+      payload.base_price = Number(payload.jastip_price);
+    }
+
+    await model.create(payload);
     res.json({ message: "Menu created" });
   } catch (err) {
     res.status(500).json({ message: err.message });
@@ -20,7 +27,13 @@ exports.create = async (req, res) => {
 
 exports.update = async (req, res) => {
   try {
-    await model.update(req.params.id, req.body);
+    // Auto-set base_price = jastip_price saat update
+    const payload = { ...req.body };
+    if (payload.jastip_price !== undefined) {
+      payload.base_price = Number(payload.jastip_price);
+    }
+
+    await model.update(req.params.id, payload);
     res.json({ message: "Menu updated" });
   } catch (err) {
     res.status(500).json({ message: err.message });

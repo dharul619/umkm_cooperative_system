@@ -28,8 +28,8 @@ const UserTable = ({
     // { field: "username", headerName: "Username", minWidth: 140 },
     { field: "role_name", headerName: "Role", minWidth: 170 },
     // { field: "phone_number", headerName: "No. HP", minWidth: 150 },
-    { field: "division", headerName: "Divisi", minWidth: 170 },
-    { field: "department", headerName: "Departement", minWidth: 170 },
+    { field: "division_name", headerName: "Divisi", minWidth: 170 },
+    { field: "department_name", headerName: "Departemen", minWidth: 170 },
     {
       field: "status",
       headerName: "Status",
@@ -136,8 +136,8 @@ const UserTable = ({
                 <Stack spacing={0.75}>
                   <InfoRow label="No. HP" value={user.phone_number} />
                   <InfoRow label="Role" value={user.role_name} />
-                  <InfoRow label="Divisi" value={user.division} />
-                  <InfoRow label="Departemen" value={user.department} />
+                  <InfoRow label="Divisi" value={user.division_name} />
+                  <InfoRow label="Departemen" value={user.department_name} />
                 </Stack>
 
                 <Box

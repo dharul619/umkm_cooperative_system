@@ -38,16 +38,14 @@ const MasterDataTable = ({ rows, type, loading, onEdit, onDelete }) => {
         { field: "name", headerName: "Nama Menu", minWidth: 220 },
         { field: "vendor_name", headerName: "Vendor", minWidth: 180 },
         {
-          field: "base_price",
-          headerName: "Harga Pokok",
-          minWidth: 140,
-          render: (value) => `Rp ${Number(value || 0).toLocaleString("id-ID")}`,
-        },
-        {
           field: "jastip_price",
-          headerName: "Harga Jastip",
+          headerName: "Harga",
           minWidth: 140,
-          render: (value) => `Rp ${Number(value || 0).toLocaleString("id-ID")}`,
+          render: (value) => (
+            <Typography variant="body2" fontWeight={700} color="#7A2E3A">
+              Rp {Number(value || 0).toLocaleString("id-ID")}
+            </Typography>
+          ),
         },
       ],
     },

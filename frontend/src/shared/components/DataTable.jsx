@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Box,
   IconButton,
@@ -12,6 +12,9 @@ import {
   TableSortLabel,
   Tooltip,
   Typography,
+  useMediaQuery,
+  useTheme,
+  Stack,
 } from "@mui/material";
 import EmptyState from "./EmptyState";
 import Loading from "./Loading";
@@ -51,6 +54,8 @@ const DataTable = ({
   sx = {},
 }) => {
   const [sortConfig, setSortConfig] = useState({ field: null, direction: "asc" });
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   const sortedRows = useMemo(() => {
     if (!sortConfig.field) return rows;
@@ -100,6 +105,85 @@ const DataTable = ({
     );
   }
 
+  // Mobile Card View
+  if (isMobile) {
+    return (
+      <Stack spacing={1.5} sx={sx}>
+        {sortedRows.map((row, rowIndex) => (
+          <Paper
+            key={getRowId(row)}
+            elevation={0}
+            sx={{
+              p: 2,
+              border: "1px solid #FDE8EC",
+              borderRadius: 2,
+              backgroundColor: "#FAFAFA",
+            }}
+          >
+            {columns.map((column, colIndex) => {
+              const value = row[column.field];
+              return (
+                <Box
+                  key={column.field}
+                  sx={{ mb: colIndex < columns.length - 1 ? 1 : 0 }}
+                >
+                  <Typography
+                    variant="caption"
+                    color="text.secondary"
+                    fontWeight={700}
+                    sx={{ display: "block", mb: 0.25 }}
+                  >
+                    {column.headerName || column.label}
+                  </Typography>
+                  {column.render ? (
+                    column.render(value, row, rowIndex)
+                  ) : (
+                    <Typography variant="body2" fontWeight={500}>
+                      {value ?? "-"}
+                    </Typography>
+                  )}
+                </Box>
+              );
+            })}
+            {!!actions.length && (
+              <Box
+                sx={{
+                  mt: 1.5,
+                  pt: 1.5,
+                  borderTop: "1px solid #FDE8EC",
+                  display: "flex",
+                  gap: 1,
+                  flexWrap: "wrap",
+                }}
+              >
+                {actions.map((action) => {
+                  const disabled = action.disabled?.(row);
+                  const Icon = action.icon;
+
+                  return (
+                    <Tooltip key={action.label} title={action.label}>
+                      <span>
+                        <IconButton
+                          size="small"
+                          color={action.color || "primary"}
+                          disabled={disabled}
+                          onClick={() => action.onClick?.(row)}
+                        >
+                          {Icon && <Icon fontSize="small" />}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                  );
+                })}
+              </Box>
+            )}
+          </Paper>
+        ))}
+      </Stack>
+    );
+  }
+
+  // Desktop Table View
   return (
     <TableContainer
       component={Paper}

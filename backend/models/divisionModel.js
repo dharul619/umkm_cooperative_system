@@ -10,3 +10,16 @@ exports.update = (id, data) =>
 
 exports.delete = (id) =>
   db.promise().query("DELETE FROM divisions WHERE id=?", [id]);
+
+// Check if division is in use
+exports.getReferenceCount = async (id) => {
+  const [users] = await db.promise().query(
+    "SELECT COUNT(*) as count FROM users WHERE division_id = ?",
+    [id]
+  );
+  return {
+    exists: true,
+    referenceCount: users[0]?.count || 0,
+    canDelete: (users[0]?.count || 0) === 0,
+  };
+};

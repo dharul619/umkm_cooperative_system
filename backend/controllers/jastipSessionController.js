@@ -1,6 +1,7 @@
 const sessionModel = require("../models/jastipSessionModel");
 const sessionMenuModel = require("../models/jastipSessionMenuModel");
 const orderModel = require("../models/jastipOrderModel");
+const paymentModel = require("../models/paymentModel");
 const vendorOrderController = require("./vendorOrderController");
 
 exports.getAll = async (req, res) => {
@@ -105,6 +106,16 @@ exports.closeSession = async (req, res) => {
       return res.status(400).json({ message: "Tidak bisa menutup sesi karena belum ada pesanan member" });
     }
 
+    // Check for failed/expired payments
+    const failedPayments = await paymentModel.getFailedPaymentsBySessionId(sessionId);
+    if (failedPayments.length > 0) {
+      const memberNames = failedPayments.map(p => p.member_name || `Member #${p.member_id}`).join(", ");
+      return res.status(400).json({
+        message: `Tidak bisa menutup sesi. Ada ${failedPayments.length} pembayaran yang gagal/expired: ${memberNames}. Harap selesaikan pembayaran terlebih dahulu.`,
+        failedPayments: failedPayments.length,
+      });
+    }
+
     await sessionModel.updateStatus(sessionId, "CONFIRMED");
     // Generate vendor orders
     await vendorOrderController.generateVendorOrdersInternal(sessionId);
@@ -195,6 +206,15 @@ exports.updateSessionStatus = async (req, res) => {
     if (status === "CONFIRMED") {
       if (Number(session.order_count || 0) === 0) {
         return res.status(400).json({ message: "Tidak bisa menutup sesi karena belum ada pesanan member" });
+      }
+      // Check for failed/expired payments before confirming
+      const failedPayments = await paymentModel.getFailedPaymentsBySessionId(id);
+      if (failedPayments.length > 0) {
+        const memberNames = failedPayments.map(p => p.member_name || `Member #${p.member_id}`).join(", ");
+        return res.status(400).json({
+          message: `Tidak bisa menutup sesi. Ada ${failedPayments.length} pembayaran yang gagal/expired: ${memberNames}. Harap selesaikan pembayaran terlebih dahulu.`,
+          failedPayments: failedPayments.length,
+        });
       }
       await sessionModel.updateStatus(id, "CONFIRMED");
       await vendorOrderController.generateVendorOrdersInternal(id);

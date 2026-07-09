@@ -1,4 +1,4 @@
-﻿import { useState } from "react";
+import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Container,
@@ -18,8 +18,8 @@ import {
   Visibility,
   VisibilityOff,
   LoginRounded,
-  StorageRounded,
 } from "@mui/icons-material";
+import CooperativeLogo from "../../../shared/components/CooperativeLogo";
 import { useAuth } from "../hooks/useAuth";
 
 const LoginPage = () => {
@@ -106,7 +106,7 @@ const LoginPage = () => {
                 marginBottom: 1,
               }}
             >
-              <StorageRounded sx={{ fontSize: 32 }} />
+              <CooperativeLogo size={40} />
               <Typography variant="h4" fontWeight="bold">
                 Koperasi 245
               </Typography>

@@ -5,7 +5,8 @@ export const userService = {
   getAll: async () => {
     try {
       const response = await axiosInstance.get(API_ENDPOINTS.USERS);
-      return response.data;
+      // Backend returns { success, data, message } - extract the data array
+      return response.data.data || [];
     } catch (error) {
       throw error.response?.data || { message: "Gagal mengambil data user" };
     }

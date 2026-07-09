@@ -16,10 +16,13 @@ import CheckCircleRounded from "@mui/icons-material/CheckCircleRounded";
 import CancelRounded from "@mui/icons-material/CancelRounded";
 import ArrowForwardRounded from "@mui/icons-material/ArrowForwardRounded";
 import DownloadRounded from "@mui/icons-material/DownloadRounded";
+import AssignmentRounded from "@mui/icons-material/AssignmentRounded";
+import WarningRounded from "@mui/icons-material/WarningRounded";
 import { jsPDF } from "jspdf";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
 import ExpandLessRounded from "@mui/icons-material/ExpandLessRounded";
 import {
+  Alert,
   Avatar,
   Box,
   Chip,
@@ -30,6 +33,7 @@ import {
   Step,
   StepLabel,
   Stepper,
+  StepIcon,
   Tooltip,
   Typography,
   Collapse,
@@ -100,6 +104,78 @@ const paymentStatusMeta = {
   PAID: { label: "Lunas", color: "success" },
   PENDING: { label: "Pending", color: "warning" },
   SETTLED: { label: "Lunas", color: "success" },
+};
+
+/* ─── Custom Step Icon Component for Status Flow ─── */
+const StatusStepIcon = ({ active, completed, icon: IconComponent, isDoneStep }) => {
+  if (completed && isDoneStep) {
+    // Show checklist icon for DONE step when completed
+    return (
+      <Box
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          display: "grid",
+          placeItems: "center",
+          backgroundColor: "#1B5E20",
+          color: "#FFFFFF",
+        }}
+      >
+        <AssignmentRounded sx={{ fontSize: 18 }} />
+      </Box>
+    );
+  }
+  if (completed) {
+    return (
+      <Box
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          display: "grid",
+          placeItems: "center",
+          backgroundColor: "#7A2E3A",
+          color: "#FFFFFF",
+        }}
+      >
+        <CheckCircleRounded sx={{ fontSize: 20 }} />
+      </Box>
+    );
+  }
+  if (active) {
+    return (
+      <Box
+        sx={{
+          width: 32,
+          height: 32,
+          borderRadius: "50%",
+          display: "grid",
+          placeItems: "center",
+          backgroundColor: "#FFF1F3",
+          color: "#7A2E3A",
+          border: "2px solid #7A2E3A",
+        }}
+      >
+        {IconComponent && <IconComponent sx={{ fontSize: 16 }} />}
+      </Box>
+    );
+  }
+  return (
+    <Box
+      sx={{
+        width: 32,
+        height: 32,
+        borderRadius: "50%",
+        display: "grid",
+        placeItems: "center",
+        backgroundColor: "#F5F5F5",
+        color: "#9E9E9E",
+      }}
+    >
+      {IconComponent && <IconComponent sx={{ fontSize: 16 }} />}
+    </Box>
+  );
 };
 
 const formatDateOnly = (value) => {
@@ -481,15 +557,33 @@ const SessionDetailPage = () => {
   /* ── Table columns ── */
   const menuColumns = useMemo(
     () => [
-      { field: "menu_name", headerName: "Menu", minWidth: 220 },
-      { field: "vendor_name", headerName: "Vendor", minWidth: 180 },
-      { field: "notes", headerName: "Catatan", minWidth: 200 },
+      {
+        field: "menu_name",
+        headerName: "Menu",
+        minWidth: 150,
+        render: (value) => (
+          <Typography variant="body2" fontWeight={700} noWrap>
+            {value}
+          </Typography>
+        ),
+      },
+      {
+        field: "vendor_name",
+        headerName: "Vendor",
+        minWidth: 120,
+        render: (value) => (
+          <Typography variant="caption" color="text.secondary" noWrap>
+            {value}
+          </Typography>
+        ),
+      },
       {
         field: "jastip_price",
-        headerName: "Harga Jastip",
-        minWidth: 140,
+        headerName: "Harga",
+        minWidth: 100,
+        align: "right",
         render: (value) => (
-          <Typography variant="body2" fontWeight={600}>
+          <Typography variant="body2" fontWeight={600} color="#7A2E3A">
             {formatCurrency(value)}
           </Typography>
         ),
@@ -563,12 +657,18 @@ const SessionDetailPage = () => {
   const nextAction = useMemo(() => {
     if (!session) return null;
     const s = session.status;
+    const hasFailedPayments = (session.failed_payment_count || 0) > 0;
+
     if (s === "OPEN")
       return {
         status: "CONFIRMED",
-        label: "Tutup Penerimaan Pesanan",
+        label: hasFailedPayments ? "Tutup Penerimaan Pesanan" : "Tutup Penerimaan Pesanan",
         color: "primary",
         icon: <LockRounded fontSize="small" />,
+        disabled: hasFailedPayments,
+        disabledReason: hasFailedPayments
+          ? `Tidak bisa ditutup. Ada ${session.failed_payment_count} pembayaran gagal/expired.`
+          : undefined,
       };
     if (s === "CONFIRMED")
       return {
@@ -655,27 +755,25 @@ const SessionDetailPage = () => {
       </StatusAlert>
 
       {/* ── Top Summary Banner Card (Full Width) ── */}
-      <AppCard contentSx={{ p: 2.5 }}>
+      <AppCard contentSx={{ p: { xs: 2, md: 2.5 } }}>
+        {/* Desktop Layout */}
         <Box
           sx={{
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
+            display: { xs: "none", md: "flex" },
             alignItems: "center",
-            justifyContent: "space-between",
-            width: "100%",
-            gap: { xs: 3, md: 2 }
+            gap: 1,
           }}
         >
           {/* Column 1: Detail Sesi */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0, width: "100%" }}>
-            <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 44, height: 44 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+            <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 40, height: 40 }}>
               <CalendarTodayRounded fontSize="small" />
             </Avatar>
             <Box>
               <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ letterSpacing: 0.5, display: "block" }}>
                 TANGGAL SESI
               </Typography>
-              <Typography variant="body1" fontWeight={800} color="#7A2E3A" sx={{ mt: 0.25 }}>
+              <Typography variant="body2" fontWeight={800} color="#7A2E3A" sx={{ mt: 0.25 }}>
                 {formatDateOnly(session?.order_date)}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
@@ -685,18 +783,18 @@ const SessionDetailPage = () => {
           </Box>
 
           {/* Divider 1 */}
-          <Divider orientation="vertical" flexItem sx={{ display: { xs: "none", md: "block" }, bgcolor: "#FDE8EC" }} />
+          <Divider orientation="vertical" flexItem sx={{ bgcolor: "#FDE8EC", mx: 1 }} />
 
           {/* Column 2: Member & Pesanan */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0, width: "100%", pl: { md: 2 } }}>
-            <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 44, height: 44 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+            <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 40, height: 40 }}>
               <PersonRounded fontSize="small" />
             </Avatar>
             <Box>
               <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ letterSpacing: 0.5, display: "block" }}>
-                PARTISIPAN MEMBER
+                PARTISIPAN
               </Typography>
-              <Typography variant="body1" fontWeight={800} color="#7A2E3A" sx={{ mt: 0.25 }}>
+              <Typography variant="body2" fontWeight={800} color="#7A2E3A" sx={{ mt: 0.25 }}>
                 {uniqueMembers} Member
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
@@ -706,18 +804,18 @@ const SessionDetailPage = () => {
           </Box>
 
           {/* Divider 2 */}
-          <Divider orientation="vertical" flexItem sx={{ display: { xs: "none", md: "block" }, bgcolor: "#FDE8EC" }} />
+          <Divider orientation="vertical" flexItem sx={{ bgcolor: "#FDE8EC", mx: 1 }} />
 
           {/* Column 3: Keuangan (IDR) */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0, width: "100%", pl: { md: 2 } }}>
-            <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 44, height: 44 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+            <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 40, height: 40 }}>
               <PaidRounded fontSize="small" />
             </Avatar>
             <Box>
               <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ letterSpacing: 0.5, display: "block" }}>
-                TRANSAKSI SESI
+                TRANSAKSI
               </Typography>
-              <Typography variant="body1" fontWeight={800} color="#7A2E3A" sx={{ mt: 0.25 }}>
+              <Typography variant="body2" fontWeight={800} color="#7A2E3A" sx={{ mt: 0.25 }}>
                 {formatCurrency(session?.total_amount)}
               </Typography>
               <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
@@ -727,18 +825,70 @@ const SessionDetailPage = () => {
           </Box>
 
           {/* Divider 3 */}
-          <Divider orientation="vertical" flexItem sx={{ display: { xs: "none", md: "block" }, bgcolor: "#FDE8EC" }} />
+          <Divider orientation="vertical" flexItem sx={{ bgcolor: "#FDE8EC", mx: 1 }} />
 
           {/* Column 4: Status & Logistik */}
-          <Box sx={{ display: "flex", alignItems: "center", gap: 2, flex: 1, minWidth: 0, width: "100%", pl: { md: 2 } }}>
-            <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 44, height: 44 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1.5, flex: 1 }}>
+            <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 40, height: 40 }}>
               <StorefrontRounded fontSize="small" />
             </Avatar>
             <Box>
               <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ letterSpacing: 0.5, display: "block" }}>
-                STATUS & LOGISTIK
+                STATUS
               </Typography>
-              <Box sx={{ display: "flex", alignItems: "center", mt: 0.25 }}>
+              <Chip
+                label={paymentStatusMeta[session?.payment_status]?.label || session?.payment_status || "-"}
+                sx={{
+                  bgcolor: "#FFF0F2",
+                  color: "#7A2E3A",
+                  fontWeight: 800,
+                  border: "1px solid #7A2E3A",
+                  height: 22,
+                  fontSize: "0.7rem",
+                  px: 0.5,
+                  mt: 0.25,
+                }}
+                size="small"
+              />
+              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.25 }}>
+                {session?.menu_count ?? sessionMenus.length} menu · {session?.vendor_count || "-"} vendor
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+
+        {/* Mobile Layout - Grid based */}
+        <Grid container spacing={2} sx={{ display: { xs: "flex", md: "none" }, mt: 0 }}>
+          {/* Row 1: Date & Coordinator */}
+          <Grid item xs={12} sm={6}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 40, height: 40, flexShrink: 0 }}>
+                <CalendarTodayRounded fontSize="small" />
+              </Avatar>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ letterSpacing: 0.5, display: "block" }}>
+                  TANGGAL SESI
+                </Typography>
+                <Typography variant="body2" fontWeight={800} color="#7A2E3A">
+                  {formatDateOnly(session?.order_date)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary" noWrap>
+                  Coord: {session?.coordinator_name || "-"}
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+
+          {/* Row 1: Payment Status */}
+          <Grid item xs={12} sm={6}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 40, height: 40, flexShrink: 0 }}>
+                <StorefrontRounded fontSize="small" />
+              </Avatar>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ letterSpacing: 0.5, display: "block" }}>
+                  STATUS PEMBAYARAN
+                </Typography>
                 <Chip
                   label={paymentStatusMeta[session?.payment_status]?.label || session?.payment_status || "-"}
                   sx={{
@@ -747,25 +897,97 @@ const SessionDetailPage = () => {
                     fontWeight: 800,
                     border: "1px solid #7A2E3A",
                     height: 22,
-                    fontSize: "0.75rem",
-                    px: 0.5
+                    fontSize: "0.7rem",
+                    px: 0.5,
                   }}
                   size="small"
                 />
+                <Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+                  {session?.menu_count ?? sessionMenus.length} menu · {session?.vendor_count || "-"} vendor
+                </Typography>
               </Box>
-              <Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 0.5 }}>
-                {session?.menu_count ?? sessionMenus.length} menu · {session?.vendor_count || "-"} vendor
-              </Typography>
             </Box>
-          </Box>
-        </Box>
+          </Grid>
+
+          {/* Row 2: Member Count */}
+          <Grid item xs={6}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 40, height: 40, flexShrink: 0 }}>
+                <PersonRounded fontSize="small" />
+              </Avatar>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ letterSpacing: 0.5, display: "block" }}>
+                  PARTISIPAN
+                </Typography>
+                <Typography variant="body2" fontWeight={800} color="#7A2E3A">
+                  {uniqueMembers} Member
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  {orders.length} pesanan
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+
+          {/* Row 2: Total Amount */}
+          <Grid item xs={6}>
+            <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+              <Avatar sx={{ bgcolor: "#FFF0F2", color: "#7A2E3A", width: 40, height: 40, flexShrink: 0 }}>
+                <PaidRounded fontSize="small" />
+              </Avatar>
+              <Box sx={{ minWidth: 0 }}>
+                <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ letterSpacing: 0.5, display: "block" }}>
+                  TOTAL
+                </Typography>
+                <Typography variant="body2" fontWeight={800} color="#7A2E3A" noWrap>
+                  {formatCurrency(session?.total_amount)}
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Profit: {formatCurrency(session?.total_profit)}
+                </Typography>
+              </Box>
+            </Box>
+          </Grid>
+        </Grid>
       </AppCard>
+
+      {/* Failed Payment Warning Alert */}
+      {session?.status === "OPEN" && session?.failed_payment_count > 0 && (
+        <Alert
+          severity="warning"
+          icon={<WarningRounded />}
+          sx={{
+            bgcolor: "#FFF3E0",
+            color: "#E65100",
+            border: "1px solid #FFB74D",
+            "& .MuiAlert-icon": { color: "#E65100" },
+            alignItems: "center",
+          }}
+        >
+          <Typography variant="body2" fontWeight={700}>
+            Peringatan: {session.failed_payment_count} pembayaran gagal/expired.
+          </Typography>
+          <Typography variant="caption">
+            Sesi tidak dapat ditutup sebelum pembayaran diselesaikan atau dibatalkan.
+            Harap koordinasi dengan member terkait untuk menyelesaikan pembayaran.
+          </Typography>
+        </Alert>
+      )}
 
       {/* ── Operational Area (Full Width Stack) ── */}
       <Stack spacing={3}>
         {/* Card 1: Status & Kontrol Sesi */}
         <AppCard>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2.5 }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: { xs: "flex-start", sm: "center" },
+              flexDirection: { xs: "column", sm: "row" },
+              gap: 1,
+              mb: 2.5
+            }}
+          >
             <Typography variant="subtitle2" fontWeight={800} color="text.secondary">
               STATUS SESI JASTIP
             </Typography>
@@ -787,22 +1009,28 @@ const SessionDetailPage = () => {
           {/* Status Action Controls */}
           <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap", mb: 3 }}>
             {nextAction && (
-              <AppButton
-                startIcon={nextAction.icon}
-                color="inherit"
-                disabled={nextAction.disabled}
-                onClick={() =>
-                  handleStatusChangeClick(nextAction.status, nextAction.label)
-                }
-                sx={{
-                  bgcolor: "#7A2E3A",
-                  color: "#FFFFFF",
-                  fontWeight: 800,
-                  "&:hover": { bgcolor: "#C93F58" },
-                }}
-              >
-                {nextAction.label}
-              </AppButton>
+              <Tooltip title={nextAction.disabledReason || ""} arrow placement="top">
+                <span>
+                  <AppButton
+                    startIcon={nextAction.icon}
+                    color="inherit"
+                    disabled={nextAction.disabled}
+                    onClick={() =>
+                      handleStatusChangeClick(nextAction.status, nextAction.label)
+                    }
+                    sx={{
+                      bgcolor: nextAction.disabled ? "#E0E0E0" : "#7A2E3A",
+                      color: nextAction.disabled ? "#757575" : "#FFFFFF",
+                      fontWeight: 800,
+                      "&:hover": {
+                        bgcolor: nextAction.disabled ? "#E0E0E0" : "#C93F58",
+                      },
+                    }}
+                  >
+                    {nextAction.label}
+                  </AppButton>
+                </span>
+              </Tooltip>
             )}
             {canCancel && (
               <AppButton
@@ -835,25 +1063,45 @@ const SessionDetailPage = () => {
 
           {/* Progress Stepper inside Card */}
           {session && session.status !== "CANCELLED" && (
-            <Box sx={{ mt: 2, pt: 2, borderTop: "1px solid #FDE8EC" }}>
-              <Stepper activeStep={activeStepIndex} alternativeLabel sx={{ py: 1 }}>
-                {STATUS_FLOW.map((step) => {
+            <Box
+              sx={{
+                mt: 2,
+                pt: 2,
+                borderTop: "1px solid #FDE8EC",
+                overflowX: "auto",
+                "&::-webkit-scrollbar": { height: 4 },
+                "&::-webkit-scrollbar-thumb": { backgroundColor: "#FDE8EC", borderRadius: 2 },
+              }}
+            >
+              <Stepper
+                activeStep={activeStepIndex}
+                alternativeLabel
+                sx={{
+                  py: 1,
+                  minWidth: "max-content",
+                  "& .MuiStepConnector-line": { minWidth: 40 },
+                }}
+              >
+                {STATUS_FLOW.map((step, index) => {
                   const stepMeta = statusMeta[step];
                   const isActive = step === session.status;
+                  const isDoneStep = step === "DONE";
+
                   return (
                     <Step key={step}>
                       <StepLabel
-                        StepIconProps={{
-                          sx: {
-                            "&.Mui-active": { color: "#7A2E3A" },
-                            "&.Mui-completed": { color: "#7A2E3A" },
-                          },
-                        }}
+                        StepIconComponent={(props) => (
+                          <StatusStepIcon
+                            {...props}
+                            isDoneStep={isDoneStep}
+                          />
+                        )}
                       >
                         <Typography
                           variant="caption"
                           fontWeight={isActive ? 800 : 600}
                           color={isActive ? "#7A2E3A" : "text.secondary"}
+                          sx={{ textAlign: "center", whiteSpace: "nowrap" }}
                         >
                           {stepMeta.label}
                         </Typography>
@@ -882,7 +1130,9 @@ const SessionDetailPage = () => {
               sx={{
                 display: "flex",
                 justifyContent: "space-between",
-                alignItems: "center",
+                alignItems: { xs: "flex-start", sm: "center" },
+                flexDirection: { xs: "column", sm: "row" },
+                gap: 1,
                 mb: 2,
               }}
             >
@@ -909,6 +1159,7 @@ const SessionDetailPage = () => {
                   color: "#7A2E3A",
                   fontWeight: 800,
                   border: "1px solid #7A2E3A",
+                  flexShrink: 0,
                 }}
               />
             </Box>
@@ -939,7 +1190,8 @@ const SessionDetailPage = () => {
                   key={vo.id}
                   sx={{
                     display: "flex",
-                    alignItems: "center",
+                    flexDirection: { xs: "column", sm: "row" },
+                    alignItems: { xs: "flex-start", sm: "center" },
                     justifyContent: "space-between",
                     gap: 2,
                     p: 2,
@@ -956,6 +1208,7 @@ const SessionDetailPage = () => {
                       alignItems: "center",
                       gap: 1.5,
                       minWidth: 0,
+                      width: { xs: "100%", sm: "auto" },
                     }}
                   >
                     <Avatar
@@ -964,6 +1217,7 @@ const SessionDetailPage = () => {
                         color: "#7A2E3A",
                         width: 36,
                         height: 36,
+                        flexShrink: 0,
                       }}
                     >
                       <StorefrontRounded fontSize="small" />
@@ -982,8 +1236,11 @@ const SessionDetailPage = () => {
                     sx={{
                       display: "flex",
                       alignItems: "center",
-                      gap: 1.5,
+                      gap: 1,
+                      flexWrap: "wrap",
                       flexShrink: 0,
+                      width: { xs: "100%", sm: "auto" },
+                      justifyContent: { xs: "flex-start", sm: "flex-end" },
                     }}
                   >
                     <Chip
@@ -1005,7 +1262,7 @@ const SessionDetailPage = () => {
                       onClick={() => downloadVendorPdf(vo)}
                       sx={{ borderColor: "#7A2E3A", color: "#7A2E3A" }}
                     >
-                      Unduh PDF
+                      PDF
                     </AppButton>
 
                     <AppButton
@@ -1015,7 +1272,6 @@ const SessionDetailPage = () => {
                       startIcon={<SendRounded />}
                       onClick={() => handleSendWA(vo)}
                       sx={{
-                        minWidth: 130,
                         bgcolor: "#7A2E3A",
                         color: "#FFFFFF",
                         "&:hover": { bgcolor: "#C93F58" },
@@ -1043,9 +1299,11 @@ const SessionDetailPage = () => {
                       cursor: "pointer",
                       transition: "background-color 0.2s",
                       "&:hover": { bgcolor: "#F3F4F6" },
+                      flexWrap: "wrap",
+                      gap: 1,
                     }}
                   >
-                    <Stack direction="row" spacing={1} alignItems="center">
+                    <Stack direction="row" spacing={1} alignItems="center" sx={{ flexWrap: "wrap", gap: 1 }}>
                       <Chip
                         label="Terkirim"
                         size="small"
@@ -1074,7 +1332,8 @@ const SessionDetailPage = () => {
                           key={vo.id}
                           sx={{
                             display: "flex",
-                            alignItems: "center",
+                            flexDirection: { xs: "column", sm: "row" },
+                            alignItems: { xs: "flex-start", sm: "center" },
                             justifyContent: "space-between",
                             gap: 2,
                             p: 2,
@@ -1091,6 +1350,7 @@ const SessionDetailPage = () => {
                               alignItems: "center",
                               gap: 1.5,
                               minWidth: 0,
+                              width: { xs: "100%", sm: "auto" },
                             }}
                           >
                             <Avatar
@@ -1099,6 +1359,7 @@ const SessionDetailPage = () => {
                                 color: "#757575",
                                 width: 36,
                                 height: 36,
+                                flexShrink: 0,
                               }}
                             >
                               <StorefrontRounded fontSize="small" />
@@ -1117,8 +1378,11 @@ const SessionDetailPage = () => {
                             sx={{
                               display: "flex",
                               alignItems: "center",
-                              gap: 1.5,
+                              gap: 1,
+                              flexWrap: "wrap",
                               flexShrink: 0,
+                              width: { xs: "100%", sm: "auto" },
+                              justifyContent: { xs: "flex-start", sm: "flex-end" },
                             }}
                           >
                             <Tooltip
@@ -1144,7 +1408,7 @@ const SessionDetailPage = () => {
                               onClick={() => downloadVendorPdf(vo)}
                               sx={{ borderColor: "#E0E0E0", color: "#757575" }}
                             >
-                              Unduh PDF
+                              PDF
                             </AppButton>
 
                             <AppButton
@@ -1153,7 +1417,7 @@ const SessionDetailPage = () => {
                               color="inherit"
                               startIcon={<ReplayRounded />}
                               onClick={() => handleSendWA(vo)}
-                              sx={{ minWidth: 130, borderColor: "#E0E0E0", color: "#757575" }}
+                              sx={{ borderColor: "#E0E0E0", color: "#757575" }}
                             >
                               Kirim Ulang
                             </AppButton>
@@ -1173,11 +1437,13 @@ const SessionDetailPage = () => {
           <Tabs
             value={activeTab}
             onChange={(e, val) => setActiveTab(val)}
+            variant="scrollable"
+            scrollButtons="auto"
             sx={{
               borderBottom: 1,
               borderColor: "divider",
               mb: 2.5,
-              "& .MuiTab-root": { fontWeight: 800, color: "text.secondary", textTransform: "none", fontSize: "0.95rem" },
+              "& .MuiTab-root": { fontWeight: 800, color: "text.secondary", textTransform: "none", fontSize: { xs: "0.8rem", sm: "0.95rem" }, minHeight: 48 },
               "& .Mui-selected": { color: "#7A2E3A !important" },
               "& .MuiTabs-indicator": { bgcolor: "#7A2E3A", height: 3 },
             }}
@@ -1186,23 +1452,25 @@ const SessionDetailPage = () => {
             <Tab label={`Daftar Menu Tersedia (${sessionMenus.length})`} />
           </Tabs>
 
-          {activeTab === 0 ? (
-            <DataTable
-              columns={orderColumns}
-              rows={orders}
-              loading={loading}
-              emptyTitle="Belum ada pesanan"
-              emptyDescription="Belum ada member yang memesan pada session ini."
-            />
-          ) : (
-            <DataTable
-              columns={menuColumns}
-              rows={sessionMenus}
-              loading={loading}
-              emptyTitle="Belum ada menu"
-              emptyDescription="Menu pada session ini belum diinput."
-            />
-          )}
+          <Box sx={{ overflowX: "auto" }}>
+            {activeTab === 0 ? (
+              <DataTable
+                columns={orderColumns}
+                rows={orders}
+                loading={loading}
+                emptyTitle="Belum ada pesanan"
+                emptyDescription="Belum ada member yang memesan pada session ini."
+              />
+            ) : (
+              <DataTable
+                columns={menuColumns}
+                rows={sessionMenus}
+                loading={loading}
+                emptyTitle="Belum ada menu"
+                emptyDescription="Menu pada session ini belum diinput."
+              />
+            )}
+          </Box>
         </AppCard>
       </Stack>
 

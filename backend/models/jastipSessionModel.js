@@ -26,7 +26,12 @@ const sessionSelect = `SELECT jo.id,
               SELECT COUNT(*)
               FROM jastip_session_menus jsm
               WHERE jsm.session_id = jo.id
-            ) AS menu_count
+            ) AS menu_count,
+            (
+              SELECT COUNT(*)
+              FROM payments p
+              WHERE p.order_id = jo.id AND p.state IN ('FAILED', 'EXPIRED')
+            ) AS failed_payment_count
      FROM jastip_orders jo
      LEFT JOIN users u ON jo.coordinator_id = u.id`;
 

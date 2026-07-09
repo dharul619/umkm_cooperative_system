@@ -1,4 +1,4 @@
-﻿import { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import {
   Container,
@@ -18,9 +18,9 @@ import {
 } from "@mui/material";
 import {
   AppRegistrationRounded,
-  StorageRounded,
   CheckCircleRounded,
 } from "@mui/icons-material";
+import CooperativeLogo from "../../../shared/components/CooperativeLogo";
 import { useAuth } from "../hooks/useAuth";
 import { authService } from "../services/authService";
 
@@ -256,7 +256,7 @@ const RegisterPage = () => {
                 marginBottom: 1,
               }}
             >
-              <StorageRounded sx={{ fontSize: 32 }} />
+              <CooperativeLogo size={40} />
               <Typography variant="h4" fontWeight="bold">
                 Koperasi 245
               </Typography>

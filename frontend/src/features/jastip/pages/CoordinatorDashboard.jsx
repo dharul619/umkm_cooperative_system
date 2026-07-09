@@ -50,7 +50,13 @@ const CoordinatorDashboard = () => {
           return (
             <Grid item xs={12} sm={6} lg={4} key={card.title}>
               <AppCard sx={{ height: "100%" }}>
-                <Box sx={{ display: "flex", alignItems: "center", gap: 1.5 }}>
+                <Box
+                  sx={{
+                    display: "flex",
+                    alignItems: { xs: "flex-start", sm: "center" },
+                    gap: 1.5,
+                  }}
+                >
                   <Box
                     sx={{
                       width: 44,
@@ -65,7 +71,7 @@ const CoordinatorDashboard = () => {
                   >
                     <Icon />
                   </Box>
-                  <Box sx={{ minWidth: 0 }}>
+                  <Box sx={{ minWidth: 0, flex: 1 }}>
                     <Typography variant="subtitle1" fontWeight={800} color="#7A2E3A">
                       {card.title}
                     </Typography>

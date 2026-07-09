@@ -46,7 +46,6 @@ const CreateSessionPage = () => {
         menu_name: selectedMenu?.name || "-",
         vendor_name: vendors.find((vendor) => String(vendor.id) === String(selectedMenu?.vendor_id))?.name || "-",
         notes: selectedNotes.trim() || null,
-        base_price: selectedMenu?.base_price || 0,
         jastip_price: selectedMenu?.jastip_price || 0,
       },
     ]);
@@ -95,11 +94,10 @@ const CreateSessionPage = () => {
   };
 
   const columns = [
-    { field: "menu_name", headerName: "Menu", minWidth: 220 },
-    { field: "vendor_name", headerName: "Vendor", minWidth: 180 },
-    { field: "notes", headerName: "Notes", minWidth: 200 },
-    { field: "base_price", headerName: "Harga Pokok", minWidth: 140, render: (value) => formatCurrency(value) },
-    { field: "jastip_price", headerName: "Harga Jastip", minWidth: 140, render: (value) => formatCurrency(value) },
+    { field: "menu_name", headerName: "Menu", minWidth: 200 },
+    { field: "vendor_name", headerName: "Vendor", minWidth: 150 },
+    { field: "notes", headerName: "Catatan", minWidth: 150 },
+    { field: "jastip_price", headerName: "Harga", minWidth: 120, render: (value) => formatCurrency(value) },
   ];
 
   return (

@@ -7,6 +7,7 @@ import {
   DialogTitle,
   MenuItem,
   Typography,
+  Alert,
 } from "@mui/material";
 import { AppButton, AppTextField } from "../../../../shared/components";
 
@@ -76,8 +77,10 @@ const MasterDataForm = ({
     }
     if (type === "menu") {
       payload.vendor_id = Number(payload.vendor_id);
-      payload.base_price = Number(payload.base_price);
       payload.jastip_price = Number(payload.jastip_price);
+      // base_price akan di-set otomatis sama dengan jastip_price di backend
+      // sehingga profit per item = 0, dan profit murni berasal dari operational fee
+      payload.base_price = Number(payload.jastip_price);
     }
 
     if (type === "vendor") {
@@ -204,21 +207,38 @@ const MasterDataForm = ({
                   </MenuItem>
                 ))}
               </AppTextField>
+
+              {/* Info notice - base_price explanation */}
+              {formData.jastip_price && (
+                <Alert
+                  severity="info"
+                  icon={false}
+                  sx={{
+                    bgcolor: "#E3F2FD",
+                    color: "#1565C0",
+                    "& .MuiAlert-message": { py: 0.5 },
+                  }}
+                >
+                  <Typography variant="caption" fontWeight={600}>
+                    Harga Pokok = Harga = Rp {Number(formData.jastip_price).toLocaleString("id-ID")}
+                  </Typography>
+                  <br />
+                  <Typography variant="caption" sx={{ opacity: 0.8 }}>
+                    Profit murni berasal dari biaya operasional per member.
+                  </Typography>
+                </Alert>
+              )}
+
               <AppTextField
-                label="Harga Pokok"
-                name="base_price"
-                type="number"
-                value={formData.base_price}
-                onChange={handleChange}
-                required
-              />
-              <AppTextField
-                label="Harga Jastip"
+                label="Harga"
                 name="jastip_price"
                 type="number"
                 value={formData.jastip_price}
                 onChange={handleChange}
                 required
+                placeholder="Masukkan harga"
+                helperText="Harga ini akan menjadi harga pokok & harga jual"
+                inputProps={{ min: 0 }}
               />
             </>
           )}
