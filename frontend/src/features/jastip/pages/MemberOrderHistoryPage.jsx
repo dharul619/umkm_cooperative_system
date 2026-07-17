@@ -192,7 +192,7 @@ const MemberOrderHistoryPage = () => {
     cursorY += 7;
 
     pdf.setFontSize(11);
-    pdf.text("Koperasi 245", marginLeft, cursorY);
+    pdf.text("SIKOMU", marginLeft, cursorY);
     cursorY += 6;
     pdf.setFont("helvetica", "normal");
     pdf.text(`Order ID: ${session.order_id}`, marginLeft, cursorY);

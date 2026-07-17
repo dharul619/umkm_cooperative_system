@@ -49,7 +49,7 @@ const TransactionProofPage = () => {
 
   const downloadReceipt = () => {
     const lines = [
-      "BUKTI TRANSAKSI - KOPERASI 245",
+      "BUKTI TRANSAKSI - SIKOMU",
       `Order ID: ${payment?.order_id || state.orderId || "-"}`,
       `Reference: ${payment?.external_reference || "-"}`,
       `Status: ${stateLabel[payment?.state] || payment?.state || "-"}`,
@@ -96,7 +96,7 @@ const TransactionProofPage = () => {
         <Box sx={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", gap: 2, mb: 2 }}>
           <Box>
             <Typography variant="overline" sx={{ color: tone.color, fontWeight: 800, letterSpacing: 0 }}>BUKTI TRANSAKSI</Typography>
-            <Typography variant="h5" fontWeight={900} color="#2D2A26">Koperasi 245</Typography>
+            <Typography variant="h5" fontWeight={900} color="#2D2A26">SIKOMU</Typography>
             <Typography variant="body2" color="text.secondary">{resultType === "success" ? "Transaksi sukses" : "Transaksi tidak berhasil"}</Typography>
           </Box>
           <Box sx={{ minWidth: 150, textAlign: "right", px: 2, py: 1, borderRadius: 1, backgroundColor: tone.background, color: tone.color, border: `1px solid ${tone.color}22` }}>

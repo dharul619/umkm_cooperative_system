@@ -35,6 +35,7 @@ import AssessmentRounded from "@mui/icons-material/AssessmentRounded";
 import LocalShippingRounded from "@mui/icons-material/LocalShippingRounded";
 import ExpandLessRounded from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
+import TrendingUpRounded from "@mui/icons-material/TrendingUpRounded";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 
 export const drawerWidth = 264;
@@ -47,11 +48,20 @@ const roleItems = {
       icon: GroupRounded,
       children: [
         { label: "Users", path: "/admin/users", icon: GroupRounded },
-        { label: "Divisions", path: "/admin/master/divisions", icon: ApartmentRounded },
-        { label: "Departments", path: "/admin/master/departments", icon: AccountTreeRounded },
+        {
+          label: "Divisions",
+          path: "/admin/master/divisions",
+          icon: ApartmentRounded,
+        },
+        {
+          label: "Departments",
+          path: "/admin/master/departments",
+          icon: AccountTreeRounded,
+        },
       ],
     },
     { label: "Laporan", path: "/admin/reports", icon: AssessmentRounded },
+    { label: "Prediksi Penjualan", path: "/admin/predictions", icon: TrendingUpRounded },
     {
       label: "Log Aktivitas",
       path: "/admin/activity-logs",
@@ -61,11 +71,8 @@ const roleItems = {
   "Jastip Coordinator": [
     { label: "Dashboard", path: "/jastip/dashboard", icon: DashboardRounded },
     { label: "Sesi Aktif", path: "/jastip/sessions", icon: ViewListRounded },
-    {
-      label: "Riwayat Sesi",
-      path: "/jastip/sessions/history",
-      icon: HistoryRounded,
-    },
+    { label: "Orders", path: "/jastip/orders", icon: ReceiptLongRounded },
+
     {
       label: "Vendors",
       path: "/jastip/master/vendors",
@@ -76,25 +83,40 @@ const roleItems = {
       path: "/jastip/master/menus",
       icon: RestaurantMenuRounded,
     },
-    { label: "Orders", path: "/jastip/orders", icon: ReceiptLongRounded },
-    { label: "Payments", path: "/jastip/payments", icon: PaymentsRounded },
+    // { label: "Payments", path: "/jastip/payments", icon: PaymentsRounded },
+    {
+      label: "Riwayat Sesi",
+      path: "/jastip/sessions/history",
+      icon: HistoryRounded,
+    },
   ],
   "Business Coordinator": [
+    { label: "Dashboard", path: "/retail/dashboard", icon: DashboardRounded },
     {
-      label: "Kategori",
-      path: "/retail/master/categories",
+      label: "Master Produk",
       icon: CategoryRounded,
-    },
-    {
-      label: "Subkategori",
-      path: "/retail/master/subcategories",
-      icon: AccountTreeRounded,
-    },
-    { label: "Brand", path: "/retail/master/brands", icon: BusinessRounded },
-    {
-      label: "Produk",
-      path: "/retail/master/products",
-      icon: Inventory2Rounded,
+      children: [
+        {
+          label: "Kategori",
+          path: "/retail/master/categories",
+          icon: CategoryRounded,
+        },
+        {
+          label: "Subkategori",
+          path: "/retail/master/subcategories",
+          icon: AccountTreeRounded,
+        },
+        {
+          label: "Brand",
+          path: "/retail/master/brands",
+          icon: BusinessRounded,
+        },
+        {
+          label: "Produk",
+          path: "/retail/master/products",
+          icon: Inventory2Rounded,
+        },
+      ],
     },
     {
       label: "Supplier",
@@ -122,6 +144,7 @@ const roleItems = {
 const SidebarContent = ({ items = [], onNavigate }) => {
   const [openMenus, setOpenMenus] = useState({
     "Users Management": true, // Default open for admin
+    "Master Produk": true, // Default open for Business Coordinator
   });
 
   const handleToggle = (label) => {
@@ -137,8 +160,11 @@ const SidebarContent = ({ items = [], onNavigate }) => {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
           <CooperativeLogo size={40} />
           <Box>
-            <Typography variant="subtitle1" fontWeight={800} color="#C93F58">
-              Koperasi 245
+            <Typography variant="subtitle1" fontWeight={850} color="#C93F58" sx={{ lineHeight: 1.1 }}>
+              SIKOMU
+            </Typography>
+            <Typography variant="caption" display="block" sx={{ fontSize: 9, opacity: 0.8, color: "text.secondary" }}>
+              Koperasi Multi-Unit
             </Typography>
           </Box>
         </Box>
@@ -175,7 +201,11 @@ const SidebarContent = ({ items = [], onNavigate }) => {
                   )}
                 </ListItemButton>
                 <Collapse in={isOpen} timeout="auto" unmountOnExit>
-                  <List component="div" disablePadding sx={{ pl: 3.5, mt: 0.5 }}>
+                  <List
+                    component="div"
+                    disablePadding
+                    sx={{ pl: 3.5, mt: 0.5 }}
+                  >
                     {item.children.map((child) => {
                       const ChildIcon = child.icon;
                       return (
@@ -201,7 +231,10 @@ const SidebarContent = ({ items = [], onNavigate }) => {
                           </ListItemIcon>
                           <ListItemText
                             primary={child.label}
-                            primaryTypographyProps={{ fontWeight: 700, fontSize: 13 }}
+                            primaryTypographyProps={{
+                              fontWeight: 700,
+                              fontSize: 13,
+                            }}
                           />
                         </ListItemButton>
                       );

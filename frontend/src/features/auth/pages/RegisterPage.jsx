@@ -258,11 +258,11 @@ const RegisterPage = () => {
             >
               <CooperativeLogo size={40} />
               <Typography variant="h4" fontWeight="bold">
-                Koperasi 245
+                SIKOMU
               </Typography>
             </Box>
             <Typography variant="body2" sx={{ opacity: 0.9 }}>
-              Platform Manajemen Koperasi Terintegrasi
+              Sistem Informasi Koperasi Multi-Unit
             </Typography>
           </Box>
 

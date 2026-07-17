@@ -11,6 +11,8 @@ router.use("/sessions", sessionRoutes);
 router.use("/session-menus", sessionMenuRoutes);
 router.use("/orders", orderRoutes);
 
+router.get("/coordinator/stats", auth, authorize(["Jastip Coordinator", "System Administrator"]), c.getCoordinatorStats);
+
 router.get("/member/sessions", auth, authorize(["Cooperative Member"]), c.getMemberSessions);
 router.get("/member/sessions/:sessionId/menus", auth, authorize(["Cooperative Member"]), c.getMemberSessionMenus);
 router.post("/member/orders", auth, authorize(["Cooperative Member"]), c.createMemberOrder);

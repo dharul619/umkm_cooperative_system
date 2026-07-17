@@ -26,15 +26,18 @@ exports.getStats = async () => {
     ORDER BY r.id
   `);
 
-  // Recent activity (last 7 days)
+  // Recent activity logs (last 10 logs with user info)
   const [recentActivity] = await db.promise().query(`
     SELECT
-      DATE(created_at) as date,
-      COUNT(*) as count
-    FROM activity_logs
-    WHERE created_at >= DATE_SUB(NOW(), INTERVAL 7 DAY)
-    GROUP BY DATE(created_at)
-    ORDER BY date DESC
+      al.id,
+      al.activity,
+      al.created_at,
+      u.name as user_name,
+      u.username
+    FROM activity_logs al
+    LEFT JOIN users u ON al.user_id = u.id
+    ORDER BY al.created_at DESC
+    LIMIT 10
   `);
 
   // Active sessions (if jastip module exists)
@@ -420,6 +423,31 @@ exports.getRetailSalesTrendMonthly = async (months = 12) => {
 };
 
 /**
+ * Get sales by category
+ */
+exports.getSalesByCategory = async (limit = 10) => {
+  const [data] = await db.promise().query(`
+    SELECT
+      c.id as category_id,
+      c.name as category_name,
+      COUNT(DISTINCT sd.sale_id) as total_transactions,
+      SUM(sd.qty) as total_qty,
+      COALESCE(SUM(sd.subtotal), 0) as total_revenue,
+      COALESCE(SUM(sd.subtotal - (sd.cost_price * sd.qty)), 0) as total_profit
+    FROM categories c
+    JOIN subcategories sc ON c.id = sc.category_id
+    JOIN products p ON sc.id = p.subcategory_id
+    JOIN sales_details sd ON p.id = sd.product_id
+    JOIN sales s ON sd.sale_id = s.id
+    GROUP BY c.id, c.name
+    ORDER BY total_revenue DESC
+    LIMIT ?
+  `, [limit]);
+
+  return data;
+};
+
+/**
  * Get sales by subcategory
  */
 exports.getSalesBySubcategory = async (limit = 10) => {
@@ -690,6 +718,23 @@ exports.getPaymentMethodStats = async () => {
       COALESCE(SUM(amount), 0) as total_amount
     FROM payments
     GROUP BY payment_method
+  `);
+  return data;
+};
+
+/**
+ * Get user count by division
+ */
+exports.getUserCountByDivision = async () => {
+  const [data] = await db.promise().query(`
+    SELECT
+      d.id as division_id,
+      d.name as division_name,
+      COUNT(u.id) as user_count
+    FROM divisions d
+    LEFT JOIN users u ON d.id = u.division_id AND u.status = 'approved'
+    GROUP BY d.id, d.name
+    ORDER BY user_count DESC
   `);
   return data;
 };

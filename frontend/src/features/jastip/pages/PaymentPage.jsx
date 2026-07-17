@@ -65,7 +65,7 @@ const PaymentPage = () => {
 
   const downloadReceipt = () => {
     const lines = [
-      "BUKTI TRANSAKSI - KOPERASI 245",
+      "BUKTI TRANSAKSI - SIKOMU",
       `Order ID: ${payment?.order_id || orderId}`,
       `Reference: ${payment?.external_reference || "-"}`,
       `Status: ${stateLabel[payment?.state] || payment?.state || "-"}`,

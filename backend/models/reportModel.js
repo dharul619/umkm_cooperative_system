@@ -739,7 +739,8 @@ exports.getSHURetail = async (filters = {}) => {
       COUNT(DISTINCT s.id) as total_transactions,
       COALESCE(SUM(s.total_amount), 0) as total_penjualan,
       COALESCE(SUM(s.total_profit), 0) as total_profit,
-      COALESCE(SUM(s.koperasi_share), 0) as kopi_share
+      COALESCE(SUM(s.koperasi_share), 0) as kopi_share,
+      COALESCE(SUM(s.coordinator_share), 0) as coordinator_share
     FROM sales s
     WHERE 1=1 ${dateFilter}
     GROUP BY DATE_FORMAT(s.sale_date, '%Y-%m'), DATE_FORMAT(s.sale_date, '%M %Y')
@@ -753,7 +754,8 @@ exports.getSHURetail = async (filters = {}) => {
       COUNT(DISTINCT s.id) as total_transactions,
       COALESCE(SUM(s.total_amount), 0) as total_penjualan,
       COALESCE(SUM(s.total_profit), 0) as total_profit,
-      COALESCE(SUM(s.koperasi_share), 0) as kopi_share
+      COALESCE(SUM(s.koperasi_share), 0) as kopi_share,
+      COALESCE(SUM(s.coordinator_share), 0) as coordinator_share
     FROM sales s
     WHERE 1=1 ${dateFilter}
   `, params);

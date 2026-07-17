@@ -26,6 +26,10 @@ import {
   MenuItem,
   LinearProgress,
   Avatar,
+  Table,
+  TableBody,
+  TableCell,
+  TableRow,
 } from "@mui/material";
 import { AppCard, PageHeader, AppButton } from "../../../shared/components";
 import { useDashboard } from "../hooks/useDashboard";
@@ -266,17 +270,17 @@ const TopListItem = ({ title, subtitle, value, color = "#2563EB" }) => {
 };
 
 const TabPanel = ({ children, value, index }) => (
-  <Box role="tabpanel" hidden={value !== index} sx={{ pt: 1.5 }}>
+  <Box role="tabpanel" hidden={value !== index} sx={{ pt: 1.5, width: "100%" }}>
     {value === index && children}
   </Box>
 );
 
 // ===================== OVERVIEW TAB =====================
-const OverviewTab = ({ shu, stats, paymentMethods, loading, onNavigateToRoute }) => {
+const OverviewTab = ({ shu, stats, retail, jastip, usersByDivision, loading, onNavigateToRoute }) => {
   const totalSHU = (shu?.overview?.combined?.kopi_share || 0);
 
   return (
-    <Box>
+    <Box sx={{ width: "100%" }}>
       <Grid container spacing={3} sx={{ mb: 4.5 }}>
         <Grid item xs={12} sm={6} md={3}>
           <PremiumKPICard
@@ -326,16 +330,18 @@ const OverviewTab = ({ shu, stats, paymentMethods, loading, onNavigateToRoute })
         </Grid>
       </Grid>
 
-      <Grid container spacing={3}>
-        <Grid item xs={12}>
-          <AppCard sx={{ p: 0.5 }}>
-            <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ mb: 3, px: 1 }}>
+      {/* Row 2: Bar Chart + 2 Donut Charts (md=8, md=2, md=2) */}
+      <Grid container spacing={3} sx={{ mb: 4.5 }}>
+        {/* 1. Bar Chart (md={8}) */}
+        <Grid item xs={12} md={8}>
+          <AppCard sx={{ p: 1.5, height: "100%", display: "flex", flexDirection: "column" }}>
+            <Typography variant="subtitle1" fontWeight={850} color="text.primary" sx={{ mb: 2.5, px: 1 }}>
               Profit per Bulan (Gabungan Ritel & Jastip)
             </Typography>
             {loading ? (
-              <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
+              <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
             ) : shu?.comparison?.length > 0 ? (
-              <ResponsiveContainer width="100%" height={300}>
+              <ResponsiveContainer width="100%" height={280}>
                 <BarChart data={shu.comparison} margin={{ top: 15, right: 10, left: 0, bottom: 5 }}>
                   <defs>
                     <linearGradient id="retailProfitGrad" x1="0" y1="0" x2="0" y2="1">
@@ -350,7 +356,7 @@ const OverviewTab = ({ shu, stats, paymentMethods, loading, onNavigateToRoute })
                   <CartesianGrid strokeDasharray="4 4" stroke="#F1F5F9" vertical={false} />
                   <XAxis
                     dataKey="month"
-                    tick={{ fontSize: 10, fill: CHART_COLORS.slateText, fontWeight: 600 }}
+                    tick={{ fontSize: 11, fill: CHART_COLORS.slateText, fontWeight: 700 }}
                     tickFormatter={(v) => {
                       const [, m] = v.split("-");
                       const months = ["Jan","Feb","Mar","Apr","Mei","Jun","Jul","Agu","Sep","Okt","Nov","Des"];
@@ -361,173 +367,278 @@ const OverviewTab = ({ shu, stats, paymentMethods, loading, onNavigateToRoute })
                   />
                   <YAxis
                     tickFormatter={(v) => formatCurrency(v)}
-                    tick={{ fontSize: 10, fill: CHART_COLORS.slateText, fontWeight: 600 }}
+                    tick={{ fontSize: 11, fill: CHART_COLORS.slateText, fontWeight: 700 }}
                     width={75}
                     axisLine={false}
                     tickLine={false}
                   />
                   <Tooltip content={<CustomTooltip />} />
-                  <Legend wrapperStyle={{ fontSize: 11, fontWeight: 700, paddingTop: 15 }} />
-                  <Bar dataKey="retail_profit" name="Retail" fill="url(#retailProfitGrad)" radius={[5, 5, 0, 0]} barSize={22} />
-                  <Bar dataKey="jastip_profit" name="Jastip" fill="url(#jastipProfitGrad)" radius={[5, 5, 0, 0]} barSize={22} />
+                  <Legend wrapperStyle={{ fontSize: 12, fontWeight: 800, paddingTop: 10 }} />
+                  <Bar dataKey="retail_profit" name="Retail" fill="url(#retailProfitGrad)" radius={[4, 4, 0, 0]} barSize={24} />
+                  <Bar dataKey="jastip_profit" name="Jastip" fill="url(#jastipProfitGrad)" radius={[4, 4, 0, 0]} barSize={24} />
                 </BarChart>
               </ResponsiveContainer>
             ) : (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 300 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 280 }}>
                 <Typography variant="body2" color="text.secondary">Belum ada data</Typography>
-              </Box>
-            )}
-          </AppCard>
-        </Grid>
-        
-        <Grid item xs={12} md={4}>
-          <AppCard sx={{ height: "100%" }}>
-            <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ mb: 2 }}>
-              Proporsi SHU Koperasi
-            </Typography>
-            {loading ? (
-              <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 2 }} />
-            ) : (
-              <Box sx={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: 180 }}>
-                <PieChart width={160} height={160}>
-                  <Pie
-                    data={[
-                      { name: "Retail", value: shu?.overview?.retail?.kopi_share || 0, color: CHART_COLORS.retail },
-                      { name: "Jastip", value: shu?.overview?.jastip?.kopi_share || 0, color: CHART_COLORS.jastip },
-                    ].filter((d) => d.value > 0)}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={45}
-                    outerRadius={65}
-                    paddingAngle={4}
-                    dataKey="value"
-                  >
-                    {[
-                      { name: "Retail", value: shu?.overview?.retail?.kopi_share || 0, color: CHART_COLORS.retail },
-                      { name: "Jastip", value: shu?.overview?.jastip?.kopi_share || 0, color: CHART_COLORS.jastip },
-                    ]
-                      .filter((d) => d.value > 0)
-                      .map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => formatCurrency(value)} />
-                </PieChart>
-                <Box
-                  sx={{
-                    position: "absolute",
-                    textAlign: "center",
-                    pointerEvents: "none",
-                  }}
-                >
-                  <Typography variant="caption" color="text.secondary" fontWeight={750} sx={{ fontSize: "0.6rem", textTransform: "uppercase" }}>
-                    Total SHU
-                  </Typography>
-                  <Typography variant="body2" fontWeight={855} color="#7A2E3A">
-                    {formatCurrency(totalSHU)}
-                  </Typography>
-                </Box>
               </Box>
             )}
           </AppCard>
         </Grid>
 
-        <Grid item xs={12} md={4}>
-          <AppCard sx={{ height: "100%" }}>
-            <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ mb: 2 }}>
-              Metode Pembayaran Jastip
+        {/* 2. Donut Chart: Penjualan Ritel per Kategori (md={2}) */}
+        <Grid item xs={12} sm={6} md={2}>
+          <AppCard sx={{ height: "100%", display: "flex", flexDirection: "column", p: 1.5 }}>
+            <Typography variant="subtitle2" fontWeight={800} color="text.secondary" sx={{ mb: 1, fontSize: "0.75rem", lineHeight: 1.2 }}>
+              Penjualan Ritel Kategori
             </Typography>
             {loading ? (
-              <Skeleton variant="rectangular" height={160} sx={{ borderRadius: 2 }} />
-            ) : paymentMethods?.length > 0 ? (
-              <Box sx={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: 180 }}>
-                <PieChart width={160} height={160}>
+              <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+            ) : retail?.byCategory?.length > 0 ? (
+              <Box sx={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: 280, flexGrow: 1 }}>
+                <PieChart width={150} height={150}>
                   <Pie
-                    data={paymentMethods.map((pm, idx) => ({
-                      name: pm.payment_method,
-                      value: Number(pm.total_amount),
-                      color: [CHART_COLORS.retail, CHART_COLORS.jastip, CHART_COLORS.profit, CHART_COLORS.purple, CHART_COLORS.warning][idx % 5] || "#6B7280"
-                    })).filter(d => d.value > 0)}
+                    data={retail.byCategory
+                      .map((c, idx) => ({
+                        name: c.category_name,
+                        value: Number(c.total_revenue),
+                        color: CHART_COLORS.categories[idx % CHART_COLORS.categories.length] || "#6B7280"
+                      }))
+                      .filter((d) => d.value > 0)}
                     cx="50%"
                     cy="50%"
-                    innerRadius={45}
-                    outerRadius={65}
+                    innerRadius={40}
+                    outerRadius={60}
                     paddingAngle={3}
                     dataKey="value"
                   >
-                    {paymentMethods.map((pm, idx) => ({
-                      name: pm.payment_method,
-                      value: Number(pm.total_amount),
-                      color: [CHART_COLORS.retail, CHART_COLORS.jastip, CHART_COLORS.profit, CHART_COLORS.purple, CHART_COLORS.warning][idx % 5] || "#6B7280"
-                    })).filter(d => d.value > 0).map((entry, i) => (
-                      <Cell key={i} fill={entry.color} />
-                    ))}
+                    {retail.byCategory
+                      .map((c, idx) => ({
+                        name: c.category_name,
+                        value: Number(c.total_revenue),
+                        color: CHART_COLORS.categories[idx % CHART_COLORS.categories.length] || "#6B7280"
+                      }))
+                      .filter((d) => d.value > 0)
+                      .map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
                   </Pie>
                   <Tooltip formatter={(value) => formatCurrency(value)} />
                 </PieChart>
                 <Box sx={{ position: "absolute", textAlign: "center", pointerEvents: "none" }}>
-                  <Typography variant="caption" color="text.secondary" fontWeight={750} sx={{ fontSize: "0.6rem" }}>
-                    Total Cashless
+                  <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ fontSize: "0.5rem", textTransform: "uppercase" }}>
+                    Omzet
                   </Typography>
-                  <Typography variant="body2" fontWeight={850} color="text.primary">
-                    {formatCurrency(paymentMethods.reduce((acc, curr) => acc + Number(curr.total_amount), 0))}
+                  <Typography variant="body2" fontWeight={850} color="text.primary" sx={{ fontSize: "0.7rem" }}>
+                    {formatCurrency(retail.byCategory.reduce((acc, curr) => acc + Number(curr.total_revenue), 0))}
                   </Typography>
                 </Box>
               </Box>
             ) : (
-              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 180 }}>
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 280, flexGrow: 1 }}>
                 <Typography variant="body2" color="text.secondary">Belum ada data</Typography>
               </Box>
             )}
           </AppCard>
         </Grid>
-        
-        <Grid item xs={12} md={4}>
-          <AppCard sx={{ height: "100%" }}>
-            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2 }}>
-              <Typography variant="subtitle1" fontWeight={800} color="text.primary">
-                Log Aktivitas Koperasi
+
+        {/* 3. Donut Chart: Pemesanan Jastip per Divisi (md={2}) */}
+        <Grid item xs={12} sm={6} md={2}>
+          <AppCard sx={{ height: "100%", display: "flex", flexDirection: "column", p: 1.5 }}>
+            <Typography variant="subtitle2" fontWeight={800} color="text.secondary" sx={{ mb: 1, fontSize: "0.75rem", lineHeight: 1.2 }}>
+              Pemesanan Jastip Divisi
+            </Typography>
+            {loading ? (
+              <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+            ) : jastip?.byDivision?.length > 0 ? (
+              <Box sx={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: 280, flexGrow: 1 }}>
+                <PieChart width={150} height={150}>
+                  <Pie
+                    data={jastip.byDivision
+                      .map((d, idx) => ({
+                        name: d.division_name,
+                        value: d.total_orders,
+                        color: CHART_COLORS.categories[(idx + 2) % CHART_COLORS.categories.length] || "#6B7280"
+                      }))
+                      .filter((d) => d.value > 0)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={60}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {jastip.byDivision
+                      .map((d, idx) => ({
+                        name: d.division_name,
+                        value: d.total_orders,
+                        color: CHART_COLORS.categories[(idx + 2) % CHART_COLORS.categories.length] || "#6B7280"
+                      }))
+                      .filter((d) => d.value > 0)
+                      .map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${formatNumber(value)} Pesanan`} />
+                </PieChart>
+                <Box sx={{ position: "absolute", textAlign: "center", pointerEvents: "none" }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ fontSize: "0.5rem", textTransform: "uppercase" }}>
+                    Order
+                  </Typography>
+                  <Typography variant="body2" fontWeight={850} color="text.primary" sx={{ fontSize: "0.75rem" }}>
+                    {formatNumber(jastip.byDivision.reduce((acc, curr) => acc + Number(curr.total_orders), 0))}
+                  </Typography>
+                </Box>
+              </Box>
+            ) : (
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 280, flexGrow: 1 }}>
+                <Typography variant="body2" color="text.secondary">Belum ada data</Typography>
+              </Box>
+            )}
+          </AppCard>
+        </Grid>
+      </Grid>
+
+      {/* Row 3: Donut Chart + Log Aktivitas (md=2, md=10) */}
+      <Grid container spacing={3}>
+        {/* 1. Donut Chart: Anggota per Divisi (md={2}) */}
+        <Grid item xs={12} sm={6} md={2}>
+          <AppCard sx={{ height: "100%", display: "flex", flexDirection: "column", p: 1.5 }}>
+            <Typography variant="subtitle2" fontWeight={800} color="text.secondary" sx={{ mb: 1, fontSize: "0.75rem", lineHeight: 1.2 }}>
+              Anggota per Divisi
+            </Typography>
+            {loading ? (
+              <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
+            ) : usersByDivision?.length > 0 ? (
+              <Box sx={{ position: "relative", display: "flex", justifyContent: "center", alignItems: "center", height: 280, flexGrow: 1 }}>
+                <PieChart width={150} height={150}>
+                  <Pie
+                    data={usersByDivision
+                      .map((d, idx) => ({
+                        name: d.division_name,
+                        value: Number(d.user_count),
+                        color: CHART_COLORS.categories[(idx + 4) % CHART_COLORS.categories.length] || "#6B7280"
+                      }))
+                      .filter((d) => d.value > 0)}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius={40}
+                    outerRadius={60}
+                    paddingAngle={3}
+                    dataKey="value"
+                  >
+                    {usersByDivision
+                      .map((d, idx) => ({
+                        name: d.division_name,
+                        value: Number(d.user_count),
+                        color: CHART_COLORS.categories[(idx + 4) % CHART_COLORS.categories.length] || "#6B7280"
+                      }))
+                      .filter((d) => d.value > 0)
+                      .map((entry, i) => (
+                        <Cell key={i} fill={entry.color} />
+                      ))}
+                  </Pie>
+                  <Tooltip formatter={(value) => `${formatNumber(value)} Anggota`} />
+                </PieChart>
+                <Box sx={{ position: "absolute", textAlign: "center", pointerEvents: "none" }}>
+                  <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ fontSize: "0.5rem", textTransform: "uppercase" }}>
+                    Anggota
+                  </Typography>
+                  <Typography variant="body2" fontWeight={850} color="text.primary" sx={{ fontSize: "0.75rem" }}>
+                    {formatNumber(usersByDivision.reduce((acc, curr) => acc + Number(curr.user_count), 0))}
+                  </Typography>
+                </Box>
+              </Box>
+            ) : (
+              <Box sx={{ display: "flex", alignItems: "center", justifyContent: "center", height: 280, flexGrow: 1 }}>
+                <Typography variant="body2" color="text.secondary">Belum ada data</Typography>
+              </Box>
+            )}
+          </AppCard>
+        </Grid>
+
+        {/* 2. Log Aktivitas Koperasi (Melebar md={10}) */}
+        <Grid item xs={12} md={10}>
+          <AppCard sx={{ height: "100%", display: "flex", flexDirection: "column", p: 2 }}>
+            <Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ mb: 2.5 }}>
+              <Typography variant="subtitle1" fontWeight={855} color="text.primary">
+                Log Aktivitas Koperasi Terbaru
               </Typography>
               <AppButton
                 variant="text"
                 onClick={() => onNavigateToRoute("/admin/activity-logs")}
                 sx={{ fontWeight: 800, p: 0 }}
               >
-                Semua
+                Semua Aktivitas
               </AppButton>
             </Stack>
             {loading ? (
               <Stack spacing={1.5}><Skeleton height={42} /><Skeleton height={42} /><Skeleton height={42} /></Stack>
             ) : stats?.recentActivity?.length > 0 ? (
-              <Stack spacing={1.25}>
-                {stats.recentActivity.slice(0, 3).map((a, i) => (
-                  <Stack
-                    key={i}
-                    direction="row"
-                    alignItems="center"
-                    spacing={1.5}
-                    sx={{
-                      p: 1.25,
-                      borderRadius: 2,
-                      backgroundColor: "#F8FAFC",
-                      borderLeft: `4px solid ${CHART_COLORS.retail}`,
-                      transition: "transform 0.15s",
-                      "&:hover": {
-                        transform: "translateX(3px)"
-                      }
-                    }}
-                  >
-                    <Typography variant="body2" fontWeight={700} color="text.primary">
-                      {new Date(a.date).toLocaleDateString("id-ID", { weekday: "short", day: "numeric", month: "short" })}
-                    </Typography>
-                    <Typography variant="body2" fontWeight={850} color={CHART_COLORS.retail} sx={{ ml: "auto" }}>
-                      {formatNumber(a.count)} Log
-                    </Typography>
-                  </Stack>
-                ))}
-              </Stack>
+              <Box sx={{ overflowX: "auto", flexGrow: 1, maxHeight: 280 }}>
+                <Table size="medium">
+                  <TableBody>
+                    {stats.recentActivity.slice(0, 5).map((a, i) => (
+                      <TableRow
+                        key={i}
+                        sx={{
+                          "&:hover": { backgroundColor: "#F8FAFC" },
+                          transition: "background-color 0.15s"
+                        }}
+                      >
+                        <TableCell sx={{ py: 1, pl: 2, width: "25%", borderBottom: "1px solid #F1F5F9" }}>
+                          <Stack direction="row" spacing={1.5} alignItems="center">
+                            <Box
+                              sx={{
+                                width: 32,
+                                height: 32,
+                                borderRadius: "50%",
+                                backgroundColor: CHART_COLORS.retailLight,
+                                display: "flex",
+                                alignItems: "center",
+                                justifyContent: "center",
+                                fontWeight: 800,
+                                color: CHART_COLORS.retail,
+                                fontSize: "0.8rem",
+                                textTransform: "uppercase"
+                              }}
+                            >
+                              {(a.user_name || "S").charAt(0)}
+                            </Box>
+                            <Box>
+                              <Typography variant="body2" fontWeight={800} color="text.primary" sx={{ fontSize: "0.85rem" }}>
+                                {a.user_name || "Sistem"}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.7rem" }}>
+                                @{a.username || "sys"}
+                              </Typography>
+                            </Box>
+                          </Stack>
+                        </TableCell>
+                        <TableCell sx={{ py: 1, borderBottom: "1px solid #F1F5F9" }}>
+                          <Typography variant="body2" color="text.primary" fontWeight={700} sx={{ fontSize: "0.85rem" }}>
+                            {a.activity}
+                          </Typography>
+                        </TableCell>
+                        <TableCell align="right" sx={{ py: 1.5, pr: 2, width: "20%", borderBottom: "1px solid #F1F5F9" }}>
+                          <Typography variant="caption" color="text.secondary" fontWeight={800} sx={{ fontSize: "0.8rem" }}>
+                            {new Date(a.created_at).toLocaleDateString("id-ID", {
+                              day: "numeric",
+                              month: "short",
+                              hour: "2-digit",
+                              minute: "2-digit",
+                            })}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </Box>
             ) : (
-              <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 2 }}>Belum ada aktivitas</Typography>
+              <Typography variant="body2" color="text.secondary" textAlign="center" sx={{ py: 3, flexGrow: 1 }}>
+                Belum ada aktivitas
+              </Typography>
             )}
           </AppCard>
         </Grid>
@@ -538,7 +649,7 @@ const OverviewTab = ({ shu, stats, paymentMethods, loading, onNavigateToRoute })
 
 // ===================== JASTIP TAB =====================
 const JastipTab = ({ jastip, loading, onNavigateToRoute }) => (
-  <Box>
+  <Box sx={{ width: "100%" }}>
     <Grid container spacing={3} sx={{ mb: 4.5 }}>
       <Grid item xs={12} sm={6} md={4}>
         <PremiumKPICard
@@ -825,7 +936,7 @@ const JastipTab = ({ jastip, loading, onNavigateToRoute }) => (
 
 // ===================== RETAIL TAB =====================
 const RetailTab = ({ retail, loading, onNavigateToRoute }) => (
-  <Box>
+  <Box sx={{ width: "100%" }}>
     <Grid container spacing={3} sx={{ mb: 4.5 }}>
       <Grid item xs={12} sm={6} md={4}>
         <PremiumKPICard
@@ -1036,7 +1147,7 @@ const UserTab = ({ stats, pendingUsers = [], approveUser, rejectUser, loading, o
   const totalUsers = stats?.users?.total || 1;
 
   return (
-    <Box>
+    <Box sx={{ width: "100%" }}>
       <Grid container spacing={3} sx={{ mb: 4.5 }}>
         <Grid item xs={12} sm={6} md={3}>
           <PremiumKPICard
@@ -1223,7 +1334,7 @@ const UserTab = ({ stats, pendingUsers = [], approveUser, rejectUser, loading, o
 
 // ===================== MAIN COMPONENT =====================
 const AdminDashboard = () => {
-  const { stats, jastip, retail, shu, paymentMethods, pendingUsers, approveUser, rejectUser, loading, error, months, setMonths, refresh } = useDashboard();
+  const { stats, jastip, retail, shu, pendingUsers, usersByDivision, approveUser, rejectUser, loading, error, months, setMonths, refresh } = useDashboard();
   const [tab, setTab] = useState(0);
   const navigate = useNavigate();
 
@@ -1283,7 +1394,7 @@ const AdminDashboard = () => {
   );
 
   return (
-    <Box sx={{ background: "linear-gradient(180deg, #FFF8F9 0%, #FFFFFF 100%)", minHeight: "100%", p: 0.5, borderRadius: 4 }}>
+    <Box sx={{ background: "linear-gradient(180deg, #FFF8F9 0%, #FFFFFF 100%)", minHeight: "100%", width: "100%", boxSizing: "border-box", display: "block", p: 0.5, borderRadius: 4 }}>
       <PageHeader
         title="Dashboard Admin"
         description="Pusat analisis data operasional dan SHU Koperasi Ciledug Jaya Makmur"
@@ -1346,7 +1457,9 @@ const AdminDashboard = () => {
         <OverviewTab
           shu={shu}
           stats={stats}
-          paymentMethods={paymentMethods}
+          retail={retail}
+          jastip={jastip}
+          usersByDivision={usersByDivision}
           loading={loading}
           onNavigateToRoute={handleRouteRedirect}
         />

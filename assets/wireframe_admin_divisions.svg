@@ -1,0 +1,67 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900">
+  <!-- BACKGROUND -->
+  <rect width="1440" height="900" fill="#FFFFFF" />
+  <!-- ==================== SIDEBAR ==================== -->
+  <rect x="0" y="0" width="260" height="900" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <rect x="24" y="24" width="40" height="40" fill="#E5E5E5" stroke="#000000" stroke-width="1.5" rx="8" />
+  <text x="44" y="49" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">IMG</text>
+  <text x="76" y="48" font-family="sans-serif" font-size="18" font-weight="bold" fill="#000000">Koperasi 245</text>
+  <line x1="20" y1="80" x2="240" y2="80" stroke="#000000" stroke-width="1.5" />
+  <rect x="28" y="110" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="123" font-family="sans-serif" font-size="14" fill="#000000">Dashboard</text>
+  <rect x="28" y="154" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="167" font-family="sans-serif" font-size="14" fill="#000000">Users Management</text>
+  <rect x="36" y="198" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="60" y="211" font-family="sans-serif" font-size="13" fill="#000000">Users</text>
+  <rect x="16" y="232" width="228" height="36" fill="#000000" />
+  <rect x="36" y="242" width="14" height="14" fill="#FFFFFF" />
+  <text x="60" y="255" font-family="sans-serif" font-size="13" font-weight="bold" fill="#FFFFFF">Divisions</text>
+  <rect x="36" y="286" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="60" y="299" font-family="sans-serif" font-size="13" fill="#000000">Departments</text>
+  <rect x="28" y="330" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="343" font-family="sans-serif" font-size="14" fill="#000000">Laporan</text>
+  <rect x="28" y="374" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="387" font-family="sans-serif" font-size="14" fill="#000000">Log Aktivitas</text>
+  <!-- ==================== TOP HEADER ==================== -->
+  <rect x="260" y="0" width="1180" height="70" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <circle cx="1380" cy="35" r="18" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="1380" y="40" font-family="sans-serif" font-size="12" font-weight="bold" fill="#000000" text-anchor="middle">USR</text>
+  <text x="1230" y="36" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="end">Administrator</text>
+  <text x="1230" y="50" font-family="sans-serif" font-size="11" fill="#777777" text-anchor="end">System Admin</text>
+  <!-- ==================== CONTENT HEADER ==================== -->
+  <text x="290" y="115" font-family="sans-serif" font-size="12" font-weight="bold" fill="#777777">USERS MANAGEMENT</text>
+  <text x="290" y="145" font-family="sans-serif" font-size="24" font-weight="bold" fill="#000000">Master Divisi</text>
+  <text x="290" y="168" font-family="sans-serif" font-size="14" fill="#555555">Kelola struktur divisi utama untuk organisasi koperasi.</text>
+
+  <rect x="290" y="200" width="1110" height="660" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <rect x="310" y="220" width="300" height="36" fill="#FFFFFF" stroke="#000000" stroke-width="1.25" />
+  <text x="325" y="242" font-family="sans-serif" font-size="13" fill="#777777">Cari divisi...</text>
+  <rect x="1230" y="220" width="150" height="36" fill="#000000" />
+  <text x="1305" y="242" font-family="sans-serif" font-size="13" font-weight="bold" fill="#FFFFFF" text-anchor="middle">+ Tambah Divisi</text>
+  
+  <rect x="310" y="280" width="1070" height="500" fill="#FFFFFF" stroke="#000000" stroke-width="1" />
+  <rect x="310" y="280" width="1070" height="34" fill="#F2F2F2" stroke="#000000" stroke-width="1" />
+  <text x="330" y="302" font-family="sans-serif" font-size="12" font-weight="bold" fill="#000000">ID</text>
+  <text x="400" y="302" font-family="sans-serif" font-size="12" font-weight="bold" fill="#000000">Nama Divisi</text>
+  <text x="600" y="302" font-family="sans-serif" font-size="12" font-weight="bold" fill="#000000">Deskripsi Pekerjaan</text>
+  <text x="1200" y="302" font-family="sans-serif" font-size="12" font-weight="bold" fill="#000000" text-anchor="middle">Aksi</text>
+  
+  <text x="330" y="340" font-family="sans-serif" font-size="13" fill="#000000">1</text>
+  <text x="400" y="340" font-family="sans-serif" font-weight="bold" fill="#000000">Supporting Unit</text>
+  <text x="600" y="340" font-family="sans-serif" font-size="13" fill="#555555">Divisi pelayanan logistik, IT, kasir, dan preventif organisasi</text>
+  <text x="1200" y="340" font-family="sans-serif" font-size="13" fill="#000000" text-anchor="middle">Edit | Hapus</text>
+  <line x1="310" y1="355" x2="1380" y2="355" stroke="#CCCCCC" />
+
+  <text x="330" y="375" font-family="sans-serif" font-size="13" fill="#000000">2</text>
+  <text x="400" y="375" font-family="sans-serif" font-weight="bold" fill="#000000">Production Unit</text>
+  <text x="600" y="375" font-family="sans-serif" font-size="13" fill="#555555">Divisi manufaktur, perakitan produk, dan kontrol kualitas pabrik</text>
+  <text x="1200" y="375" font-family="sans-serif" font-size="13" fill="#000000" text-anchor="middle">Edit | Hapus</text>
+  <line x1="310" y1="390" x2="1380" y2="390" stroke="#CCCCCC" />
+
+  <text x="330" y="410" font-family="sans-serif" font-size="13" fill="#000000">3</text>
+  <text x="400" y="410" font-family="sans-serif" font-weight="bold" fill="#000000">Marketing Unit</text>
+  <text x="600" y="410" font-family="sans-serif" font-size="13" fill="#555555">Divisi penjualan ritel, promosi, dan relasi konsumen eksternal</text>
+  <text x="1200" y="410" font-family="sans-serif" font-size="13" fill="#000000" text-anchor="middle">Edit | Hapus</text>
+  <line x1="310" y1="425" x2="1380" y2="425" stroke="#CCCCCC" />
+
+</svg>

@@ -1,0 +1,76 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900">
+  <!-- BACKGROUND -->
+  <rect width="1440" height="900" fill="#FFFFFF" />
+  <!-- ==================== SIDEBAR ==================== -->
+  <rect x="0" y="0" width="260" height="900" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <rect x="24" y="24" width="40" height="40" fill="#E5E5E5" stroke="#000000" stroke-width="1.5" rx="8" />
+  <text x="44" y="49" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">IMG</text>
+  <text x="76" y="48" font-family="sans-serif" font-size="18" font-weight="bold" fill="#000000">Koperasi 245</text>
+  <line x1="20" y1="80" x2="240" y2="80" stroke="#000000" stroke-width="1.5" />
+  <rect x="16" y="100" width="228" height="36" fill="#000000" />
+  <rect x="28" y="110" width="14" height="14" fill="#FFFFFF" />
+  <text x="52" y="123" font-family="sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">Dashboard</text>
+  <rect x="28" y="154" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="167" font-family="sans-serif" font-size="14" fill="#000000">Sesi Aktif</text>
+  <rect x="28" y="198" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="211" font-family="sans-serif" font-size="14" fill="#000000">Orders</text>
+  <rect x="28" y="242" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="255" font-family="sans-serif" font-size="14" fill="#000000">Vendors</text>
+  <rect x="28" y="286" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="299" font-family="sans-serif" font-size="14" fill="#000000">Menus</text>
+  <rect x="28" y="330" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="343" font-family="sans-serif" font-size="14" fill="#000000">Riwayat Sesi</text>
+  <!-- ==================== TOP HEADER ==================== -->
+  <rect x="260" y="0" width="1180" height="70" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <circle cx="1380" cy="35" r="18" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="1380" y="40" font-family="sans-serif" font-size="12" font-weight="bold" fill="#000000" text-anchor="middle">USR</text>
+  <text x="1230" y="36" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="end">Alvin (Koordinator)</text>
+  <text x="1230" y="50" font-family="sans-serif" font-size="11" fill="#777777" text-anchor="end">Jastip Coordinator</text>
+  <!-- ==================== CONTENT HEADER ==================== -->
+  <text x="290" y="115" font-family="sans-serif" font-size="12" font-weight="bold" fill="#777777">JASTIP</text>
+  <text x="290" y="145" font-family="sans-serif" font-size="24" font-weight="bold" fill="#000000">Dashboard Jastip</text>
+  <text x="290" y="168" font-family="sans-serif" font-size="14" fill="#555555">Rangkuman data pemesanan, rekap menu jastip, dan bagi hasil laba jastip.</text>
+
+  <rect x="290" y="200" width="350" height="110" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="310" y="225" font-family="sans-serif" font-size="12" font-weight="bold" fill="#777777">Total Omset Jastip (Bulanan)</text>
+  <text x="310" y="260" font-family="sans-serif" font-size="24" font-weight="bold" fill="#000000">Rp 8.910.000</text>
+  <text x="310" y="290" font-family="sans-serif" font-size="12" fill="#000000">↑ 8% dibanding bulan lalu</text>
+
+  <rect x="670" y="200" width="350" height="110" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="690" y="225" font-family="sans-serif" font-size="12" font-weight="bold" fill="#777777">Laba Koordinator (50% SHU)</text>
+  <text x="690" y="260" font-family="sans-serif" font-size="24" font-weight="bold" fill="#000000">Rp 450.000</text>
+  <text x="690" y="290" font-family="sans-serif" font-size="12" fill="#555555">Alokasi bagi hasil operasional</text>
+
+  <rect x="1050" y="200" width="350" height="110" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="1070" y="225" font-family="sans-serif" font-size="12" font-weight="bold" fill="#777777">Sesi Terlaksana</text>
+  <text x="1070" y="260" font-family="sans-serif" font-size="24" font-weight="bold" fill="#000000">15 Sesi</text>
+  <text x="1070" y="290" font-family="sans-serif" font-size="12" fill="#555555">Rekapitulasi total sesi jastip selesai</text>
+
+  <rect x="290" y="330" width="1110" height="300" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="310" y="360" font-family="sans-serif" font-size="15" font-weight="bold" fill="#000000">Tren Harian Omset Belanja Jastip (30 Hari)</text>
+  <line x1="340" y1="580" x2="1370" y2="580" stroke="#000000" stroke-width="1.5" />
+  <path d="M 340 540 L 440 500 L 540 530 L 640 460 L 740 480 L 840 430 L 1370 350" fill="none" stroke="#777777" stroke-width="3" />
+
+  <rect x="290" y="650" width="1110" height="220" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="310" y="680" font-family="sans-serif" font-size="15" font-weight="bold" fill="#000000">Tindakan Pembayaran CASH/Tunai Pending</text>
+  <rect x="310" y="700" width="1070" height="140" fill="#FFFFFF" stroke="#000000" stroke-width="1" />
+  <rect x="310" y="700" width="1070" height="30" fill="#F2F2F2" stroke="#000000" stroke-width="1" />
+  <text x="330" y="720" font-family="sans-serif" font-size="12" fill="#000000">Nama Member</text>
+  <text x="600" y="720" font-family="sans-serif" font-size="12" fill="#000000">Tagihan</text>
+  <text x="800" y="720" font-family="sans-serif" font-size="12" fill="#000000">Sesi Jastip</text>
+  <text x="1000" y="720" font-family="sans-serif" font-size="12" fill="#000000">Aksi Verifikasi</text>
+  
+  <text x="330" y="755" font-family="sans-serif" font-size="13" fill="#000000">Syahri Ramadhan</text>
+  <text x="600" y="755" font-family="sans-serif" font-size="13" fill="#000000">Rp 56.000</text>
+  <text x="800" y="755" font-family="sans-serif" font-size="13" fill="#555555">Sesi 12 Juli 2026</text>
+  <rect x="1000" y="740" width="120" height="24" fill="#000000" />
+  <text x="1060" y="756" font-family="sans-serif" font-size="11" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Lunas Tunai</text>
+  <line x1="310" y1="770" x2="1380" y2="770" stroke="#CCCCCC" />
+
+  <text x="330" y="795" font-family="sans-serif" font-size="13" fill="#000000">Budi Santoso</text>
+  <text x="600" y="795" font-family="sans-serif" font-size="13" fill="#000000">Rp 44.000</text>
+  <text x="800" y="795" font-family="sans-serif" font-size="13" fill="#555555">Sesi 12 Juli 2026</text>
+  <rect x="1000" y="780" width="120" height="24" fill="#000000" />
+  <text x="1060" y="796" font-family="sans-serif" font-size="11" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Lunas Tunai</text>
+
+</svg>

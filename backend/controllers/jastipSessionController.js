@@ -229,5 +229,77 @@ exports.updateSessionStatus = async (req, res) => {
   }
 };
 
+exports.getCoordinatorStats = async (req, res) => {
+  try {
+    const coordinatorId = req.user.id;
+    
+    // Fetch active session
+    const [activeSessionRows] = await sessionModel.getCoordinatorActiveSession();
+    const activeSession = activeSessionRows[0] || null;
+    
+    // Fetch metrics summary
+    const summary = await sessionModel.getCoordinatorStatsSummary(coordinatorId);
+    
+    // Fetch recent sessions
+    const [recentSessions] = await sessionModel.getCoordinatorRecentSessions(coordinatorId);
+    
+    // Fetch pending payments
+    const [pendingPayments] = await sessionModel.getCoordinatorPendingPayments(coordinatorId);
+
+    // Fetch monthly sales trend
+    const [trendRows] = await sessionModel.getCoordinatorJastipSalesTrend(30);
+    const jastipSalesTrend = trendRows.map(r => ({
+      date: r.date,
+      sales: Number(r.sales || 0)
+    }));
+
+    // Active session details for visualizations
+    let activeSessionOrdersByDivision = [];
+    let activeSessionOrdersByVendor = [];
+    let activeSessionPaymentSummary = [];
+    let activeSessionOrderDetails = [];
+
+    if (activeSession) {
+      const sessionId = activeSession.id;
+      
+      const [divRows] = await sessionModel.getCoordinatorActiveSessionOrdersByDivision(sessionId);
+      activeSessionOrdersByDivision = divRows.map(r => ({
+        name: r.name || "N/A",
+        value: Number(r.value || 0)
+      }));
+
+      const [vendorRows] = await sessionModel.getCoordinatorActiveSessionOrdersByVendor(sessionId);
+      activeSessionOrdersByVendor = vendorRows.map(r => ({
+        name: r.name || "N/A",
+        value: Number(r.value || 0)
+      }));
+
+      const [paymentRows] = await sessionModel.getCoordinatorActiveSessionPaymentSummary(sessionId);
+      activeSessionPaymentSummary = paymentRows.map(r => ({
+        name: r.name || "N/A",
+        value: Number(r.value || 0)
+      }));
+
+      const [orderRows] = await sessionModel.getCoordinatorActiveSessionOrderDetails(sessionId);
+      activeSessionOrderDetails = orderRows;
+    }
+    
+    res.json({
+      activeSession,
+      summary,
+      recentSessions,
+      pendingPayments,
+      jastipSalesTrend,
+      activeSessionOrdersByDivision,
+      activeSessionOrdersByVendor,
+      activeSessionPaymentSummary,
+      activeSessionOrderDetails,
+    });
+  } catch (err) {
+    console.error("getCoordinatorStats error:", err);
+    res.status(500).json({ message: err.message || "Gagal memuat statistik koordinator" });
+  }
+};
+
 
 

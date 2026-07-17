@@ -1,0 +1,94 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 900" width="1440" height="900">
+  <!-- BACKGROUND -->
+  <rect width="1440" height="900" fill="#FFFFFF" />
+  <!-- ==================== SIDEBAR ==================== -->
+  <rect x="0" y="0" width="260" height="900" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <rect x="24" y="24" width="40" height="40" fill="#E5E5E5" stroke="#000000" stroke-width="1.5" rx="8" />
+  <text x="44" y="49" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">IMG</text>
+  <text x="76" y="48" font-family="sans-serif" font-size="18" font-weight="bold" fill="#000000">Koperasi 245</text>
+  <line x1="20" y1="80" x2="240" y2="80" stroke="#000000" stroke-width="1.5" />
+  <rect x="28" y="110" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="123" font-family="sans-serif" font-size="14" fill="#000000">Dashboard</text>
+  <rect x="28" y="154" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="167" font-family="sans-serif" font-size="14" fill="#000000">Kategori</text>
+  <rect x="28" y="198" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="211" font-family="sans-serif" font-size="14" fill="#000000">Subkategori</text>
+  <rect x="28" y="242" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="255" font-family="sans-serif" font-size="14" fill="#000000">Brand</text>
+  <rect x="28" y="286" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="299" font-family="sans-serif" font-size="14" fill="#000000">Produk</text>
+  <rect x="28" y="330" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="343" font-family="sans-serif" font-size="14" fill="#000000">Supplier</text>
+  <rect x="28" y="374" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="387" font-family="sans-serif" font-size="14" fill="#000000">Pembelian</text>
+  <rect x="16" y="408" width="228" height="36" fill="#000000" />
+  <rect x="28" y="418" width="14" height="14" fill="#FFFFFF" />
+  <text x="52" y="431" font-family="sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF">Penjualan</text>
+  <rect x="28" y="462" width="14" height="14" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="52" y="475" font-family="sans-serif" font-size="14" fill="#000000">Inventory</text>
+  <!-- ==================== TOP HEADER ==================== -->
+  <rect x="260" y="0" width="1180" height="70" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <circle cx="1380" cy="35" r="18" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="1380" y="40" font-family="sans-serif" font-size="12" font-weight="bold" fill="#000000" text-anchor="middle">USR</text>
+  <text x="1230" y="36" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="end">Via (Operator)</text>
+  <text x="1230" y="50" font-family="sans-serif" font-size="11" fill="#777777" text-anchor="end">Business Coordinator</text>
+  <!-- ==================== CONTENT HEADER ==================== -->
+  <text x="290" y="115" font-family="sans-serif" font-size="12" font-weight="bold" fill="#777777">PENJUALAN</text>
+  <text x="290" y="145" font-family="sans-serif" font-size="24" font-weight="bold" fill="#000000">Penjualan / POS Ritel</text>
+  <text x="290" y="168" font-family="sans-serif" font-size="14" fill="#555555">Formulir transaksi penjualan kasir POS ritel.</text>
+
+  <rect x="290" y="200" width="1110" height="660" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <rect x="290" y="200" width="1110" height="50" fill="#FFFFFF" stroke="#000000" stroke-width="1" />
+  <rect x="310" y="200" width="160" height="47" fill="#FFFFFF" />
+  <line x1="310" y1="247" x2="470" y2="247" stroke="#000000" stroke-width="3.0" />
+  <text x="390" y="229" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">Transaksi</text>
+  <text x="560" y="229" font-family="sans-serif" font-size="14" fill="#555555" text-anchor="middle">Daftar Transaksi</text>
+  <line x1="290" y1="249" x2="1400" y2="249" stroke="#000000" stroke-width="1.5" />
+
+  <text x="320" y="285" font-family="sans-serif" font-size="12" font-weight="bold" fill="#000000">Tanggal Penjualan</text>
+  <rect x="320" y="295" width="1050" height="40" fill="#F2F2F2" stroke="#000000" stroke-width="1.0" />
+  <text x="335" y="320" font-family="sans-serif" font-size="14" fill="#000000">Senin, 13 Juli 2026</text>
+
+  <!-- POS Item Row 1 -->
+  <rect x="320" y="350" width="1050" height="85" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" rx="6" />
+  <text x="340" y="375" font-family="sans-serif" font-size="11" font-weight="bold" fill="#000000">Barcode</text>
+  <rect x="340" y="382" width="180" height="36" fill="#FFFFFF" stroke="#000000" stroke-width="1" />
+  <text x="350" y="405" font-family="sans-serif" font-size="13" fill="#000000">899999123456</text>
+  <text x="540" y="375" font-family="sans-serif" font-size="11" font-weight="bold" fill="#000000">Nama Produk</text>
+  <rect x="540" y="382" width="280" height="36" fill="#F2F2F2" stroke="#000000" stroke-width="1" />
+  <text x="550" y="405" font-family="sans-serif" font-size="13" fill="#555555">Pringles Potato Crisps 107g</text>
+  <text x="840" y="375" font-family="sans-serif" font-size="11" font-weight="bold" fill="#000000">Harga Produk</text>
+  <rect x="840" y="382" width="180" height="36" fill="#F2F2F2" stroke="#000000" stroke-width="1" />
+  <text x="850" y="405" font-family="sans-serif" font-size="13" fill="#555555">Rp 22.000</text>
+  <text x="1040" y="375" font-family="sans-serif" font-size="11" font-weight="bold" fill="#000000">Qty</text>
+  <rect x="1040" y="382" width="120" height="36" fill="#FFFFFF" stroke="#000000" stroke-width="1" />
+  <text x="1080" y="405" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">2</text>
+  <rect x="1310" y="382" width="36" height="36" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" rx="4" />
+  <text x="1328" y="405" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">DEL</text>
+
+  <!-- POS Item Row 2 -->
+  <rect x="320" y="450" width="1050" height="85" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" rx="6" />
+  <text x="340" y="475" font-family="sans-serif" font-size="11" font-weight="bold" fill="#000000">Barcode</text>
+  <rect x="340" y="482" width="180" height="36" fill="#FFFFFF" stroke="#000000" stroke-width="1" />
+  <text x="350" y="505" font-family="sans-serif" font-size="13" fill="#000000">899999654321</text>
+  <text x="540" y="475" font-family="sans-serif" font-size="11" font-weight="bold" fill="#000000">Nama Produk</text>
+  <rect x="540" y="482" width="280" height="36" fill="#F2F2F2" stroke="#000000" stroke-width="1" />
+  <text x="550" y="505" font-family="sans-serif" font-size="13" fill="#555555">Indomie Goreng Spesial</text>
+  <text x="840" y="475" font-family="sans-serif" font-size="11" font-weight="bold" fill="#000000">Harga Produk</text>
+  <rect x="840" y="482" width="180" height="36" fill="#F2F2F2" stroke="#000000" stroke-width="1" />
+  <text x="850" y="505" font-family="sans-serif" font-size="13" fill="#555555">Rp 3.500</text>
+  <text x="1040" y="475" font-family="sans-serif" font-size="11" font-weight="bold" fill="#000000">Qty</text>
+  <rect x="1040" y="482" width="120" height="36" fill="#FFFFFF" stroke="#000000" stroke-width="1" />
+  <text x="1080" y="505" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">5</text>
+  <rect x="1310" y="482" width="36" height="36" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" rx="4" />
+  <text x="1328" y="505" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">DEL</text>
+
+  <rect x="320" y="780" width="160" height="44" fill="#FFFFFF" stroke="#000000" stroke-width="1.5" />
+  <text x="400" y="806" font-family="sans-serif" font-size="14" font-weight="bold" fill="#000000" text-anchor="middle">+ Tambah Item</text>
+  
+  <text x="1100" y="806" font-family="sans-serif" font-size="16" font-weight="bold" fill="#000000" text-anchor="end">Total Tagihan: Rp 61.500</text>
+
+  <rect x="1230" y="780" width="140" height="44" fill="#000000" />
+  <text x="1300" y="806" font-family="sans-serif" font-size="14" font-weight="bold" fill="#FFFFFF" text-anchor="middle">Simpan [Enter]</text>
+
+</svg>

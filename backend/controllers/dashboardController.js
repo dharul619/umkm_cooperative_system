@@ -194,6 +194,21 @@ exports.getRetailSalesTrendMonthly = async (req, res) => {
 };
 
 /**
+ * Get sales by category
+ * GET /api/admin/dashboard/retail/sales-by-category
+ */
+exports.getSalesByCategory = async (req, res) => {
+  try {
+    const { limit = 10 } = req.query;
+    const data = await model.getSalesByCategory(Number(limit));
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("getSalesByCategory error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
  * Get sales by subcategory
  * GET /api/admin/dashboard/retail/sales-by-subcategory
  */
@@ -322,6 +337,20 @@ exports.getPaymentMethodStats = async (req, res) => {
     res.json({ success: true, data });
   } catch (err) {
     console.error("getPaymentMethodStats error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Get user count by division
+ * GET /api/admin/dashboard/users/by-division
+ */
+exports.getUserCountByDivision = async (req, res) => {
+  try {
+    const data = await model.getUserCountByDivision();
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("getUserCountByDivision error:", err);
     res.status(500).json({ success: false, message: err.message });
   }
 };

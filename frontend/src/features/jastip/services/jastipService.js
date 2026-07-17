@@ -85,4 +85,8 @@ export const jastipService = {
     const response = await axiosInstance.put(`/payments/${paymentId}/settle`);
     return response.data;
   },
+  getCoordinatorStats: async () => {
+    const response = await axiosInstance.get("/jastip/coordinator/stats");
+    return response.data;
+  },
 };

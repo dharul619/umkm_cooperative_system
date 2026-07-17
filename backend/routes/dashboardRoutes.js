@@ -34,41 +34,47 @@ router.get("/jastip/top-menus", auth, authorize(["System Administrator"]), c.get
 // ===================== RETAIL VISUALIZATION =====================
 
 // Retail overview
-router.get("/retail/overview", auth, authorize(["System Administrator"]), c.getRetailOverview);
+router.get("/retail/overview", auth, authorize(["System Administrator", "Business Coordinator"]), c.getRetailOverview);
 
 // Retail sales trend (daily)
-router.get("/retail/sales-trend", auth, authorize(["System Administrator"]), c.getRetailSalesTrend);
+router.get("/retail/sales-trend", auth, authorize(["System Administrator", "Business Coordinator"]), c.getRetailSalesTrend);
 
 // Retail sales trend monthly
-router.get("/retail/sales-trend-monthly", auth, authorize(["System Administrator"]), c.getRetailSalesTrendMonthly);
+router.get("/retail/sales-trend-monthly", auth, authorize(["System Administrator", "Business Coordinator"]), c.getRetailSalesTrendMonthly);
+
+// Sales by category
+router.get("/retail/sales-by-category", auth, authorize(["System Administrator", "Business Coordinator"]), c.getSalesByCategory);
 
 // Sales by subcategory
-router.get("/retail/sales-by-subcategory", auth, authorize(["System Administrator"]), c.getSalesBySubcategory);
+router.get("/retail/sales-by-subcategory", auth, authorize(["System Administrator", "Business Coordinator"]), c.getSalesBySubcategory);
 
 // Top selling products
-router.get("/retail/top-products", auth, authorize(["System Administrator"]), c.getTopSellingProducts);
+router.get("/retail/top-products", auth, authorize(["System Administrator", "Business Coordinator"]), c.getTopSellingProducts);
 
 // Low stock products
-router.get("/retail/low-stock", auth, authorize(["System Administrator"]), c.getLowStockProducts);
+router.get("/retail/low-stock", auth, authorize(["System Administrator", "Business Coordinator"]), c.getLowStockProducts);
 
 // Purchase trend
-router.get("/retail/purchase-trend", auth, authorize(["System Administrator"]), c.getPurchaseTrend);
+router.get("/retail/purchase-trend", auth, authorize(["System Administrator", "Business Coordinator"]), c.getPurchaseTrend);
 
 // ===================== SHU / COMBINED =====================
 
 // SHU overview
-router.get("/shu/overview", auth, authorize(["System Administrator"]), c.getSHUOverview);
+router.get("/shu/overview", auth, authorize(["System Administrator", "Business Coordinator"]), c.getSHUOverview);
 
 // Monthly SHU comparison
 router.get("/shu/monthly-comparison", auth, authorize(["System Administrator"]), c.getMonthlySHUComparison);
 
 // Retail inventory by subcategory
-router.get("/retail/inventory-by-subcategory", auth, authorize(["System Administrator"]), c.getInventoryBySubcategory);
+router.get("/retail/inventory-by-subcategory", auth, authorize(["System Administrator", "Business Coordinator"]), c.getInventoryBySubcategory);
 
 // Jastip orders by division
 router.get("/jastip/orders-by-division", auth, authorize(["System Administrator"]), c.getJastipOrdersByDivision);
 
 // Payment method distribution
 router.get("/payments/methods", auth, authorize(["System Administrator"]), c.getPaymentMethodStats);
+
+// User count by division
+router.get("/users/by-division", auth, authorize(["System Administrator"]), c.getUserCountByDivision);
 
 module.exports = router;

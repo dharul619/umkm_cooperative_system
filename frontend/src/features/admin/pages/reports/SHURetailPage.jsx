@@ -86,7 +86,8 @@ export default function SHURetailPage() {
       { key: "total_transactions", label: "Total Transaksi", format: "number", color: "#7A2E3A", bgColor: "#fef2f2" },
       { key: "total_penjualan", label: "Total Penjualan", format: "currency", color: "#059669", bgColor: "#ecfdf5" },
       { key: "total_profit", label: "Total Profit", format: "currency", color: "#D97706", bgColor: "#fffbeb" },
-      { key: "kopi_share", label: "SHU Koperasi (50%)", format: "currency", color: "#7A2E3A", bgColor: "#fdf2f4" },
+      { key: "kopi_share", label: "SHU Koperasi (80%)", format: "currency", color: "#7A2E3A", bgColor: "#fdf2f4" },
+      { key: "coordinator_share", label: "SHU Coordinator (20%)", format: "currency", color: "#E85D75", bgColor: "#fff5f6" },
     ];
 
     const sections = [
@@ -98,7 +99,8 @@ export default function SHURetailPage() {
           { label: "Transaksi", align: "center" },
           { label: "Total Penjualan", align: "right" },
           { label: "Total Profit", align: "right" },
-          { label: "SHU Koperasi", align: "right" },
+          { label: "SHU Koperasi (80%)", align: "right" },
+          { label: "SHU Coordinator (20%)", align: "right" },
         ],
         rows: data.monthlySummary.map((m) => [
           m.month_name,
@@ -106,6 +108,7 @@ export default function SHURetailPage() {
           formatCurrency(m.total_penjualan),
           formatCurrency(m.total_profit),
           formatCurrency(m.kopi_share),
+          formatCurrency(m.coordinator_share),
         ]),
       },
     ];
@@ -196,10 +199,18 @@ export default function SHURetailPage() {
               </Box>
               <Box sx={{ ...styles.summaryCard, borderColor: "#7A2E3A", borderWidth: 2, borderStyle: "solid" }}>
                 <Typography variant="caption" color="text.secondary">
-                  SHU Koperasi (50% Profit)
+                  SHU Koperasi (80% Profit)
                 </Typography>
                 <Typography variant="h5" sx={{ color: "#7A2E3A", fontWeight: 700 }}>
                   {formatCurrency(data.summary.kopi_share)}
+                </Typography>
+              </Box>
+              <Box sx={{ ...styles.summaryCard, borderColor: "#E85D75", borderWidth: 2, borderStyle: "solid" }}>
+                <Typography variant="caption" color="text.secondary">
+                  SHU Coordinator (20% Profit)
+                </Typography>
+                <Typography variant="h5" sx={{ color: "#E85D75", fontWeight: 700 }}>
+                  {formatCurrency(data.summary.coordinator_share)}
                 </Typography>
               </Box>
             </Box>
@@ -235,13 +246,14 @@ export default function SHURetailPage() {
                         <TableCell sx={{ color: "white", fontWeight: 600 }} align="center">Transaksi</TableCell>
                         <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">Total Penjualan</TableCell>
                         <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">Total Profit</TableCell>
-                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">SHU Koperasi</TableCell>
+                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">SHU Koperasi (80%)</TableCell>
+                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">SHU Coordinator (20%)</TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
                       {data.monthlySummary.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                          <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary" }}>
                             Tidak ada data untuk periode ini
                           </TableCell>
                         </TableRow>
@@ -258,6 +270,9 @@ export default function SHURetailPage() {
                             </TableCell>
                             <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 700, color: "#7A2E3A" }}>
                               {formatCurrency(row.kopi_share)}
+                            </TableCell>
+                            <TableCell align="right" sx={{ fontFamily: "monospace", fontWeight: 700, color: "#E85D75" }}>
+                              {formatCurrency(row.coordinator_share)}
                             </TableCell>
                           </TableRow>
                         ))

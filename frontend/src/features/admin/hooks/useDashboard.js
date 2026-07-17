@@ -12,6 +12,7 @@ export const useDashboard = () => {
   const [shu, setShu] = useState(null);
   const [paymentMethods, setPaymentMethods] = useState([]);
   const [pendingUsers, setPendingUsers] = useState([]);
+  const [usersByDivision, setUsersByDivision] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
@@ -31,6 +32,7 @@ export const useDashboard = () => {
         jastipMenus,
         retailData,
         retailTrend,
+        retailCategory,
         retailSubcategory,
         retailProducts,
         retailLowStock,
@@ -40,6 +42,7 @@ export const useDashboard = () => {
         jastipDivisions,
         paymentsData,
         allUsersData,
+        usersByDivisionData,
       ] = await Promise.allSettled([
         dashboardService.getStats(),
         dashboardService.getUserGrowth(months),
@@ -51,6 +54,7 @@ export const useDashboard = () => {
         dashboardService.getJastipTopMenus(10),
         dashboardService.getRetailOverview(),
         dashboardService.getRetailSalesTrendMonthly(months),
+        dashboardService.getSalesByCategory(10),
         dashboardService.getSalesBySubcategory(10),
         dashboardService.getTopSellingProducts(10),
         dashboardService.getLowStockProducts(20),
@@ -60,12 +64,14 @@ export const useDashboard = () => {
         dashboardService.getJastipOrdersByDivision(),
         dashboardService.getPaymentMethodStats(),
         userService.getAll(),
+        dashboardService.getUserCountByDivision(),
       ]);
 
       setStats(statsData.status === "fulfilled" ? statsData.value : null);
       setUserGrowth(growthData.status === "fulfilled" ? growthData.value : []);
       setActivitySummary(activityData.status === "fulfilled" ? activityData.value : []);
       setPaymentMethods(paymentsData.status === "fulfilled" ? paymentsData.value : []);
+      setUsersByDivision(usersByDivisionData.status === "fulfilled" ? usersByDivisionData.value : []);
 
       const fetchedUsers = allUsersData.status === "fulfilled" ? allUsersData.value : [];
       setPendingUsers(fetchedUsers.filter((u) => u.status === "pending"));
@@ -82,6 +88,7 @@ export const useDashboard = () => {
       setRetail({
         overview: retailData.status === "fulfilled" ? retailData.value : null,
         trend: retailTrend.status === "fulfilled" ? retailTrend.value : [],
+        byCategory: retailCategory.status === "fulfilled" ? retailCategory.value : [],
         bySubcategory: retailSubcategory.status === "fulfilled" ? retailSubcategory.value : [],
         topProducts: retailProducts.status === "fulfilled" ? retailProducts.value : [],
         lowStock: retailLowStock.status === "fulfilled" ? retailLowStock.value : [],
@@ -143,6 +150,7 @@ export const useDashboard = () => {
     shu,
     paymentMethods,
     pendingUsers,
+    usersByDivision,
     approveUser,
     rejectUser,
     loading,

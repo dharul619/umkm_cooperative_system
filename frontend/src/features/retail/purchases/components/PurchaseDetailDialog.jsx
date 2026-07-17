@@ -1,4 +1,4 @@
-﻿import {
+import {
   Box,
   Dialog,
   DialogContent,
@@ -91,7 +91,7 @@ const PurchaseDetailDialog = ({ open, data, onClose }) => {
   const printReceipt = () => {
     if (!purchase) return;
     const content = [
-      `Koperasi 245`,
+      `SIKOMU`,
       `BUKTI TRANSAKSI PEMBELIAN`,
       `Waktu: ${formatDateTime(transactionTime)}`,
       `Supplier: ${purchase.supplier_name || "-"}`,

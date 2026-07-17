@@ -7,6 +7,7 @@ import AdminLayout from "../layouts/AdminLayout";
 import AdminDashboard from "../../features/admin/pages/AdminDashboard";
 import ActivityLogPage from "../../features/admin/pages/ActivityLogPage";
 import ReportsPage from "../../features/admin/pages/ReportsPage";
+import SalesPredictionPage from "../../features/admin/pages/SalesPredictionPage";
 import PenjualanRetailPage from "../../features/admin/pages/reports/PenjualanRetailPage";
 import StokRetailPage from "../../features/admin/pages/reports/StokRetailPage";
 import PembelianRetailPage from "../../features/admin/pages/reports/PembelianRetailPage";
@@ -39,13 +40,14 @@ import SupplierPage from "../../features/retail/master-data/pages/SupplierPage";
 import PurchasePage from "../../features/retail/purchases/pages/PurchasePage";
 import SalesPage from "../../features/retail/sales/pages/SalesPage";
 import InventoryPage from "../../features/retail/inventory/pages/InventoryPage";
+import RetailDashboard from "../../features/retail/dashboard/pages/RetailDashboard";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { CircularProgress, Box } from "@mui/material";
 
 const resolveLandingPath = (roleName) => {
   if (roleName === "Jastip Coordinator") return "/jastip/dashboard";
   if (roleName === "Cooperative Member") return "/member/jastip";
-  if (roleName === "Business Coordinator") return "/retail/master/categories";
+  if (roleName === "Business Coordinator") return "/retail/dashboard";
   if (roleName === "System Administrator") return "/admin/dashboard";
   return "/dashboard";
 };
@@ -74,6 +76,7 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<UserPages />} />
         <Route path="activity-logs" element={<ActivityLogPage />} />
+        <Route path="predictions" element={<SalesPredictionPage />} />
         <Route path="reports" element={<ReportsPage />}>
           <Route path="retail/penjualan" element={<PenjualanRetailPage />} />
           <Route path="retail/stok" element={<StokRetailPage />} />
@@ -103,8 +106,8 @@ const AppRoutes = () => {
       </Route>
 
       <Route path="/retail" element={<RoleRoute requiredRole="Business Coordinator"><AdminLayout /></RoleRoute>}>
-        <Route index element={<Navigate to="/retail/master/categories" replace />} />
-        <Route path="dashboard" element={<Navigate to="/retail/master/categories" replace />} />
+        <Route index element={<Navigate to="/retail/dashboard" replace />} />
+        <Route path="dashboard" element={<RetailDashboard />} />
         <Route path="master/categories" element={<CategoryPage />} />
         <Route path="master/subcategories" element={<SubcategoryPage />} />
         <Route path="master/brands" element={<BrandPage />} />

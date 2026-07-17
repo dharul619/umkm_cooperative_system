@@ -133,6 +133,17 @@ export const dashboardService = {
     }
   },
 
+  getSalesByCategory: async (limit = 10) => {
+    try {
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.ADMIN.RETAIL_SALES_BY_CATEGORY}?limit=${limit}`
+      );
+      return response.data.data || response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Gagal mengambil penjualan per kategori" };
+    }
+  },
+
   getSalesBySubcategory: async (limit = 10) => {
     try {
       const response = await axiosInstance.get(
@@ -223,6 +234,15 @@ export const dashboardService = {
       return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || { message: "Gagal mengambil data metode pembayaran" };
+    }
+  },
+
+  getUserCountByDivision: async () => {
+    try {
+      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.USERS_BY_DIVISION);
+      return response.data.data || response.data;
+    } catch (error) {
+      throw error.response?.data || { message: "Gagal mengambil data user per divisi" };
     }
   },
 };

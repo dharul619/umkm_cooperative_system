@@ -28,10 +28,12 @@ export const API_ENDPOINTS = {
     RETAIL_OVERVIEW: "/admin/dashboard/retail/overview",
     RETAIL_SALES_TREND: "/admin/dashboard/retail/sales-trend",
     RETAIL_SALES_TREND_MONTHLY: "/admin/dashboard/retail/sales-trend-monthly",
+    RETAIL_SALES_BY_CATEGORY: "/admin/dashboard/retail/sales-by-category",
     RETAIL_SALES_BY_SUBCATEGORY: "/admin/dashboard/retail/sales-by-subcategory",
     RETAIL_TOP_PRODUCTS: "/admin/dashboard/retail/top-products",
     RETAIL_LOW_STOCK: "/admin/dashboard/retail/low-stock",
     RETAIL_PURCHASE_TREND: "/admin/dashboard/retail/purchase-trend",
+    USERS_BY_DIVISION: "/admin/dashboard/users/by-division",
     // SHU
     SHU_OVERVIEW: "/admin/dashboard/shu/overview",
     SHU_MONTHLY_COMPARISON: "/admin/dashboard/shu/monthly-comparison",

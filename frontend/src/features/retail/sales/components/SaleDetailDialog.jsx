@@ -1,4 +1,4 @@
-﻿import {
+import {
   Box,
   Dialog,
   DialogContent,
@@ -102,7 +102,7 @@ const SaleDetailDialog = ({ open, data, onClose }) => {
   const printReceipt = () => {
     if (!sale) return;
     const content = [
-      `Koperasi 245`,
+      `SIKOMU`,
       `BUKTI TRANSAKSI PENJUALAN`,
       `Waktu: ${formatDateTime(transactionTime)}`,
       `Operator: ${sale.operator_name || "-"}`,

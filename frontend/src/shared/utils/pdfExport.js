@@ -64,8 +64,8 @@ export const generatePDFHeader = (title, reportType, filters = {}) => {
       <div style="display: flex; align-items: center; justify-content: center; gap: 15px; margin-bottom: 10px;">
         ${getLogo()}
         <div style="text-align: left;">
-          <h1 style="margin: 0; font-size: 22px; color: #7A2E3A; font-weight: 800;">KOPERASI 245</h1>
-          <p style="margin: 0; font-size: 11px; color: #666;">Koperasi Ciledug Jaya Makmur</p>
+          <h1 style="margin: 0; font-size: 22px; color: #7A2E3A; font-weight: 800;">SIKOMU</h1>
+          <p style="margin: 0; font-size: 11px; color: #666;">Sistem Informasi Koperasi Multi-Unit</p>
         </div>
       </div>
       <h2 style="margin: 10px 0 5px; font-size: 16px; color: #333;">${title}</h2>
