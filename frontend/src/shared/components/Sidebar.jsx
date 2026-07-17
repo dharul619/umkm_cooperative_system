@@ -61,7 +61,11 @@ const roleItems = {
       ],
     },
     { label: "Laporan", path: "/admin/reports", icon: AssessmentRounded },
-    { label: "Prediksi Penjualan", path: "/admin/predictions", icon: TrendingUpRounded },
+    {
+      label: "Prediksi Penjualan",
+      path: "/admin/predictions",
+      icon: TrendingUpRounded,
+    },
     {
       label: "Log Aktivitas",
       path: "/admin/activity-logs",
@@ -160,10 +164,19 @@ const SidebarContent = ({ items = [], onNavigate }) => {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1.25 }}>
           <CooperativeLogo size={40} />
           <Box>
-            <Typography variant="subtitle1" fontWeight={850} color="#C93F58" sx={{ lineHeight: 1.1 }}>
+            <Typography
+              variant="subtitle1"
+              fontWeight={850}
+              color="#C93F58"
+              sx={{ lineHeight: 1.1 }}
+            >
               SIKOMU
             </Typography>
-            <Typography variant="caption" display="block" sx={{ fontSize: 9, opacity: 0.8, color: "text.secondary" }}>
+            <Typography
+              variant="caption"
+              display="block"
+              sx={{ fontSize: 9, opacity: 0.8, color: "text.secondary" }}
+            >
               Koperasi Multi-Unit
             </Typography>
           </Box>
