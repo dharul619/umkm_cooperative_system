@@ -7,7 +7,6 @@ const REPORTS = {
   G3_PENJUALAN_JASTIP: "/admin/reports/g3-penjualan-jastip",
   G4_STOK_RITEL: "/admin/reports/g4-stok-ritel",
   G5_PEMBELIAN_RITEL: "/admin/reports/g5-pembelian-ritel",
-  G6_PREDIKSI_PENJUALAN: "/admin/reports/g6-prediksi-penjualan",
   G7_AKTIVITAS_PENGGUNA: "/admin/reports/g7-aktivitas-pengguna",
   PEMBAYARAN_JASTIP: "/admin/reports/pembayaran-jastip",
 };
@@ -36,9 +35,6 @@ export const reportService = {
 
   getG5PembelianRitel: (params) =>
     fetchReport(REPORTS.G5_PEMBELIAN_RITEL, params),
-
-  getG6PrediksiPenjualan: (params) =>
-    fetchReport(REPORTS.G6_PREDIKSI_PENJUALAN, params),
 
   getG7AktivitasPengguna: (params) =>
     fetchReport(REPORTS.G7_AKTIVITAS_PENGGUNA, params),

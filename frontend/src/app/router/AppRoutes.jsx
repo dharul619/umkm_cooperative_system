@@ -7,7 +7,6 @@ import AdminLayout from "../layouts/AdminLayout";
 import AdminDashboard from "../../features/admin/pages/AdminDashboard";
 import ActivityLogPage from "../../features/admin/pages/ActivityLogPage";
 import ReportsPage from "../../features/admin/pages/ReportsPage";
-import SalesPredictionPage from "../../features/admin/pages/SalesPredictionPage";
 import PenjualanRetailPage from "../../features/admin/pages/reports/PenjualanRetailPage";
 import StokRetailPage from "../../features/admin/pages/reports/StokRetailPage";
 import PembelianRetailPage from "../../features/admin/pages/reports/PembelianRetailPage";
@@ -76,7 +75,6 @@ const AppRoutes = () => {
         <Route path="dashboard" element={<AdminDashboard />} />
         <Route path="users" element={<UserPages />} />
         <Route path="activity-logs" element={<ActivityLogPage />} />
-        <Route path="predictions" element={<SalesPredictionPage />} />
         <Route path="reports" element={<ReportsPage />}>
           <Route path="retail/penjualan" element={<PenjualanRetailPage />} />
           <Route path="retail/stok" element={<StokRetailPage />} />
