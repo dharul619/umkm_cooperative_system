@@ -6,7 +6,7 @@ import ShoppingBagRounded from "@mui/icons-material/ShoppingBagRounded";
 import PaymentsRounded from "@mui/icons-material/PaymentsRounded";
 import GroupsRounded from "@mui/icons-material/GroupsRounded";
 import StorefrontRounded from "@mui/icons-material/StorefrontRounded";
-import { Box, Divider, List, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
+import { Box, List, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import PageHeader from "../../../shared/components/PageHeader";
 
@@ -34,7 +34,7 @@ const ReportsPage = () => {
     <Box>
       <PageHeader
         title="Laporan"
-        subtitle="Laporan READ-ONLY dari seluruh sistem"
+        subtitle="Rekapitulasi transaksi, stok, dan pembagian SHU unit usaha"
         icon={AssessmentRounded}
       />
 
@@ -91,7 +91,7 @@ const ReportsPage = () => {
         </Box>
 
         {/* Report Content */}
-        <Box sx={{ flex: 1 }}>
+        <Box sx={{ flex: 1, minWidth: 0 }}>
           {location.pathname === "/admin/reports" || location.pathname === "/admin/reports/" ? (
             <Box
               sx={{

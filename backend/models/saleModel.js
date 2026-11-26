@@ -1,9 +1,63 @@
 ﻿const db = require('../config/db');
 
-exports.getAll = () =>
-  db.promise().query(
-    'SELECT s.*, u.name AS operator_name FROM sales s LEFT JOIN users u ON s.operator_id = u.id ORDER BY s.sale_date DESC, s.created_at DESC, s.id DESC'
-  );
+const buildSalesWhereClause = (filters = {}) => {
+  let whereSql = ' WHERE 1=1';
+  const params = [];
+
+  if (filters.search) {
+    whereSql +=
+      ' AND (u.name LIKE ? OR s.sale_date LIKE ? OR CAST(s.total_amount AS CHAR) LIKE ? OR CAST(s.id AS CHAR) LIKE ?)';
+    const pattern = `%${filters.search}%`;
+    params.push(pattern, pattern, pattern, pattern);
+  }
+
+  if (filters.from) {
+    whereSql += ' AND s.sale_date >= ?';
+    params.push(filters.from);
+  }
+
+  if (filters.to) {
+    whereSql += ' AND s.sale_date <= ?';
+    params.push(filters.to);
+  }
+
+  return { whereSql, params };
+};
+
+exports.getAll = (filters = {}) => {
+  const { whereSql, params } = buildSalesWhereClause(filters);
+  let query = `
+    SELECT s.*, u.name AS operator_name
+    FROM sales s
+    LEFT JOIN users u ON s.operator_id = u.id
+    ${whereSql}
+    ORDER BY s.sale_date DESC, s.created_at DESC, s.id DESC
+  `;
+
+  if (filters.limit !== undefined) {
+    query += ' LIMIT ?';
+    params.push(Number(filters.limit));
+  }
+
+  if (filters.offset !== undefined) {
+    query += ' OFFSET ?';
+    params.push(Number(filters.offset));
+  }
+
+  return db.promise().query(query, params);
+};
+
+exports.getTotalCount = (filters = {}) => {
+  const { whereSql, params } = buildSalesWhereClause(filters);
+  const query = `
+    SELECT COUNT(*) AS total
+    FROM sales s
+    LEFT JOIN users u ON s.operator_id = u.id
+    ${whereSql}
+  `;
+
+  return db.promise().query(query, params);
+};
 
 exports.getById = (id) =>
   db.promise().query(

@@ -5,8 +5,34 @@ const isValidId = (value) => Number.isInteger(value) && value > 0;
 
 exports.getAll = async (req, res) => {
   try {
-    const [rows] = await model.getAll();
-    res.json({ success: true, data: rows, message: 'Sales fetched' });
+    const { page = 1, limit = 20, search, from, to } = req.query;
+    const pageNum = Math.max(1, Number(page) || 1);
+    const limitNum = Math.min(200, Math.max(1, Number(limit) || 20));
+    const filters = {
+      search: search ? String(search).trim() : undefined,
+      from: from || undefined,
+      to: to || undefined,
+      limit: limitNum,
+      offset: (pageNum - 1) * limitNum,
+    };
+
+    const [[rows], [countRows]] = await Promise.all([
+      model.getAll(filters),
+      model.getTotalCount(filters),
+    ]);
+    const total = Number(countRows?.[0]?.total || 0);
+
+    res.json({
+      success: true,
+      data: rows,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        totalPages: Math.max(1, Math.ceil(total / limitNum)),
+      },
+      message: 'Sales fetched',
+    });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

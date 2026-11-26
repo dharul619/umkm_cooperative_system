@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   Card,
@@ -10,17 +10,17 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableFooter,
   Paper,
   CircularProgress,
   Alert,
   Tabs,
   Tab,
-  Divider,
   Tooltip,
 } from "@mui/material";
 import { FaPrint, FaShoppingCart, FaStore, FaBox } from "react-icons/fa";
 import ReportFilter from "../../components/reports/ReportFilter";
-import AppButton from "../../../../shared/components/AppButton";
+import { AppButton, Pagination } from "../../../../shared/components";
 import axiosInstance from "../../../../services/axiosInstace";
 import {
   formatCurrency,
@@ -28,6 +28,8 @@ import {
   generateProfessionalPDF,
   openProfessionalPDF,
 } from "../../../../shared/utils/pdfExport";
+
+const ROWS_PER_PAGE = 20;
 
 export default function PembelianRetailPage() {
   const [data, setData] = useState({
@@ -39,26 +41,17 @@ export default function PembelianRetailPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState(0);
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
     from: "",
     to: "",
     supplier_id: "",
+    filterLabels: {},
   });
 
-  useEffect(() => {
-    fetchReport();
-  }, [filters]);
+  const fetchReport = useCallback(async () => {
+    if (!filters.from || !filters.to) return;
 
-  const fetchReport = async () => {
-    if (!filters.from || !filters.to) {
-      setData({
-        summary: {},
-        dailySummary: [],
-        bySupplier: [],
-        topProducts: [],
-      });
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
@@ -67,30 +60,96 @@ export default function PembelianRetailPage() {
       if (filters.to) params.append("to", filters.to);
       if (filters.supplier_id) params.append("supplier_id", filters.supplier_id);
 
-      const response = await axiosInstance.get(`/admin/reports/pembelian-retail`, { params });
+      const response = await axiosInstance.get("/admin/reports/pembelian-retail", { params });
       const result = response.data;
- 
+
       if (result.success) {
         setData(result.data);
       } else {
         setError(result.message || "Gagal mengambil data laporan");
       }
     } catch (err) {
-      setError("Terjadi kesalahan koneksi");
+      setError(err.message || "Terjadi kesalahan koneksi");
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.from, filters.to, filters.supplier_id]);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.resolve().then(() => {
+      if (mounted) {
+        fetchReport();
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [fetchReport]);
 
   const handleFilterChange = (newFilters) => {
+    setPage(1);
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
+  const handleTabChange = (_e, newValue) => {
+    setActiveTab(newValue);
+    setPage(1);
+  };
+
+  const dailyTotals = useMemo(
+    () =>
+      data.dailySummary.reduce(
+        (acc, curr) => {
+          acc.purchases += Number(curr.total_purchases || 0);
+          acc.amount += Number(curr.total_amount || 0);
+          return acc;
+        },
+        { purchases: 0, amount: 0 }
+      ),
+    [data.dailySummary]
+  );
+
+  const supplierTotals = useMemo(
+    () =>
+      data.bySupplier.reduce(
+        (acc, curr) => {
+          acc.purchases += Number(curr.total_purchases || 0);
+          acc.amount += Number(curr.total_amount || 0);
+          return acc;
+        },
+        { purchases: 0, amount: 0 }
+      ),
+    [data.bySupplier]
+  );
+
+  const productTotals = useMemo(
+    () =>
+      data.topProducts.reduce(
+        (acc, curr) => {
+          acc.qty += Number(curr.total_qty || 0);
+          acc.amount += Number(curr.total_amount || 0);
+          return acc;
+        },
+        { qty: 0, amount: 0 }
+      ),
+    [data.topProducts]
+  );
+
+  const activeRows =
+    activeTab === 0 ? data.dailySummary : activeTab === 1 ? data.bySupplier : data.topProducts;
+
+  const paginatedRows = useMemo(
+    () => activeRows.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
+    [activeRows, page]
+  );
+
   const handleExportPDF = () => {
+    const labels = filters.filterLabels || {};
     const filtersInfo = [];
     if (filters.from) filtersInfo.push(`Dari Tanggal: ${formatDate(filters.from)}`);
     if (filters.to) filtersInfo.push(`Ke Tanggal: ${formatDate(filters.to)}`);
-    if (filters.supplier_id) filtersInfo.push(`Supplier ID: ${filters.supplier_id}`);
+    if (filters.supplier_id) filtersInfo.push(`Supplier: ${labels.supplier || filters.supplier_id}`);
 
     const summaryCards = [
       { key: "total_purchases", label: "Total Pembelian", format: "number", color: "#7A2E3A", bgColor: "#fef2f2" },
@@ -112,10 +171,15 @@ export default function PembelianRetailPage() {
           Number(d.total_purchases).toLocaleString("id-ID"),
           formatCurrency(d.total_amount),
         ]),
+        footerRow: [
+          "Total",
+          dailyTotals.purchases.toLocaleString("id-ID"),
+          formatCurrency(dailyTotals.amount),
+        ],
       },
       {
         title: "Pembelian per Supplier",
-        subtitle: "Total pembelian dari masing-masing supplier",
+        subtitle: "Total pembelian per supplier",
         headers: [
           { label: "Supplier", align: "left" },
           { label: "Kontak", align: "left" },
@@ -128,6 +192,11 @@ export default function PembelianRetailPage() {
           Number(s.total_purchases).toLocaleString("id-ID"),
           formatCurrency(s.total_amount),
         ]),
+        footerRow: [
+          { label: "Total", colSpan: 2, align: "left" },
+          supplierTotals.purchases.toLocaleString("id-ID"),
+          formatCurrency(supplierTotals.amount),
+        ],
       },
       {
         title: "Produk Terbanyak Dibeli",
@@ -143,11 +212,17 @@ export default function PembelianRetailPage() {
         rows: data.topProducts.map((p) => [
           `${p.product_name} (${p.unit})`,
           p.barcode || "-",
-          `${p.category_name} / ${p.brand_name}`,
+          `${p.category_name || "-"} / ${p.brand_name || "-"}`,
           Number(p.total_qty).toLocaleString("id-ID"),
           formatCurrency(p.total_amount),
           formatCurrency(p.avg_price),
         ]),
+        footerRow: [
+          { label: "Total", colSpan: 3, align: "left" },
+          productTotals.qty.toLocaleString("id-ID"),
+          formatCurrency(productTotals.amount),
+          "-",
+        ],
       },
     ];
 
@@ -155,7 +230,7 @@ export default function PembelianRetailPage() {
       title: "LAPORAN PEMBELIAN RETAIL",
       reportType: "Warung Retail",
       filters,
-      summary: {},
+      summary: data.summary,
       summaryCards,
       sections,
       filtersInfo: filtersInfo.length > 0 ? filtersInfo.join(" | ") : "Semua Filter",
@@ -165,7 +240,7 @@ export default function PembelianRetailPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2 } }}>
       {/* Header */}
       <Box sx={styles.header}>
         <Box>
@@ -173,35 +248,38 @@ export default function PembelianRetailPage() {
             Laporan Pembelian Retail
           </Typography>
           <Typography variant="body2" sx={styles.subtitle}>
-            Ringkasan pembelian barang dan supplier
+            Rekap pembelian barang stok dan supplier
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Tooltip title="Export PDF">
-            <AppButton
-              color="primary"
-              onClick={handleExportPDF}
-              startIcon={<FaPrint />}
-              disabled={loading}
-            >
-              Export PDF
-            </AppButton>
+            <span>
+              <AppButton
+                color="primary"
+                onClick={handleExportPDF}
+                startIcon={<FaPrint />}
+                disabled={loading || !filters.from || !filters.to}
+              >
+                Export PDF
+              </AppButton>
+            </span>
           </Tooltip>
         </Box>
       </Box>
 
-      {/* Filter */}
-      <ReportFilter onFilterChange={handleFilterChange} />
+      {/* Filter (Tanggal + Supplier) */}
+      <ReportFilter
+        onFilterChange={handleFilterChange}
+        loading={loading}
+        hideCategory={true}
+        showSupplierFilter={true}
+      />
 
-      {/* Date Filter Placeholder */}
       {!filters.from || !filters.to ? (
-        <Card sx={{ mt: 3, p: 4, textAlign: "center", border: "2px dashed #F9D5DC", backgroundColor: "#FFFBFC" }}>
+        <Card sx={{ mt: 2, p: 4, textAlign: "center", border: "2px dashed #F9D5DC", backgroundColor: "#FFFBFC" }}>
           <CardContent>
             <Typography variant="h6" fontWeight={700} color="#7A2E3A" gutterBottom>
-              Rentang Tanggal Belum Ditentukan
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Silakan pilih tanggal "Dari Tanggal" dan "Ke Tanggal" pada filter di atas untuk memuat laporan.
+              Memuat Periode Laporan...
             </Typography>
           </CardContent>
         </Card>
@@ -235,7 +313,7 @@ export default function PembelianRetailPage() {
             </Box>
           </Box>
 
-          {/* Loading/Error */}
+          {/* Loading / Error */}
           {loading && (
             <Box sx={styles.loadingContainer}>
               <CircularProgress color="inherit" />
@@ -254,142 +332,236 @@ export default function PembelianRetailPage() {
             <>
               <Tabs
                 value={activeTab}
-                onChange={(e, v) => setActiveTab(v)}
+                onChange={handleTabChange}
                 sx={{ mb: 2, borderBottom: 1, borderColor: "divider" }}
               >
                 <Tab icon={<FaShoppingCart />} label="Harian" iconPosition="start" />
-                <Tab icon={<FaStore />} label="per Supplier" iconPosition="start" />
+                <Tab icon={<FaStore />} label="Per Supplier" iconPosition="start" />
                 <Tab icon={<FaBox />} label="Produk" iconPosition="start" />
               </Tabs>
 
-              {/* Tab 1: Daily Summary */}
-              {activeTab === 0 && (
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Pembelian Harian</Typography>
-                    <TableContainer component={Paper} elevation={0}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow sx={{ backgroundColor: "#7A2E3A" }}>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Tanggal</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }} align="center">Jumlah Pembelian</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">Total Pengeluaran</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {data.dailySummary.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={3} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                                Tidak ada data untuk periode ini
+              <Card>
+                <CardContent>
+                  {activeTab === 0 && (
+                    <>
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Pembelian Harian
+                      </Typography>
+                      <TableContainer component={Paper} elevation={0}>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow sx={{ backgroundColor: "#7A2E3A" }}>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }}>Tanggal</TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }} align="center">
+                                Jumlah Pembelian
+                              </TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">
+                                Total Pengeluaran
                               </TableCell>
                             </TableRow>
-                          ) : (
-                            data.dailySummary.map((row, idx) => (
-                              <TableRow key={idx} hover>
-                                <TableCell>{formatDate(row.date)}</TableCell>
-                                <TableCell align="center">{Number(row.total_purchases).toLocaleString("id-ID")}</TableCell>
-                                <TableCell align="right" sx={{ fontFamily: "monospace", color: "#DC2626" }}>
-                                  {formatCurrency(row.total_amount)}
+                          </TableHead>
+                          <TableBody>
+                            {paginatedRows.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={3} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                  Tidak ada data untuk periode ini
                                 </TableCell>
                               </TableRow>
-                            ))
+                            ) : (
+                              paginatedRows.map((row, idx) => (
+                                <TableRow key={row.date || idx} hover>
+                                  <TableCell>{formatDate(row.date)}</TableCell>
+                                  <TableCell align="center">
+                                    {Number(row.total_purchases).toLocaleString("id-ID")}
+                                  </TableCell>
+                                  <TableCell align="right" sx={{ fontFamily: "monospace", color: "#DC2626" }}>
+                                    {formatCurrency(row.total_amount)}
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                          {data.dailySummary.length > 0 && (
+                            <TableFooter>
+                              <TableRow sx={{ backgroundColor: "#F9FAFB" }}>
+                                <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
+                                <TableCell align="center" sx={{ fontWeight: 700 }}>
+                                  {dailyTotals.purchases.toLocaleString("id-ID")}
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{ fontWeight: 700, fontFamily: "monospace", color: "#DC2626" }}
+                                >
+                                  {formatCurrency(dailyTotals.amount)}
+                                </TableCell>
+                              </TableRow>
+                            </TableFooter>
                           )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              )}
+                        </Table>
+                      </TableContainer>
+                    </>
+                  )}
 
-              {/* Tab 2: By Supplier */}
-              {activeTab === 1 && (
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Pembelian per Supplier</Typography>
-                    <TableContainer component={Paper} elevation={0}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow sx={{ backgroundColor: "#7A2E3A" }}>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Supplier</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Kontak</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Alamat</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }} align="center">Jumlah Pembelian</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">Total Pengeluaran</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {data.bySupplier.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                                Tidak ada data supplier
+                  {activeTab === 1 && (
+                    <>
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Pembelian per Supplier
+                      </Typography>
+                      <TableContainer component={Paper} elevation={0}>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow sx={{ backgroundColor: "#7A2E3A" }}>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }}>Supplier</TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }}>Kontak</TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }}>Alamat</TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }} align="center">
+                                Jumlah Pembelian
+                              </TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">
+                                Total Pengeluaran
                               </TableCell>
                             </TableRow>
-                          ) : (
-                            data.bySupplier.map((row, idx) => (
-                              <TableRow key={idx} hover>
-                                <TableCell sx={{ fontWeight: 500 }}>{row.supplier_name || "Tanpa Supplier"}</TableCell>
-                                <TableCell>{row.phone || "-"}</TableCell>
-                                <TableCell sx={{ maxWidth: 200 }}>{row.address || "-"}</TableCell>
-                                <TableCell align="center">{Number(row.total_purchases).toLocaleString("id-ID")}</TableCell>
-                                <TableCell align="right" sx={{ fontFamily: "monospace", color: "#DC2626" }}>
-                                  {formatCurrency(row.total_amount)}
+                          </TableHead>
+                          <TableBody>
+                            {paginatedRows.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                  Tidak ada data supplier
                                 </TableCell>
                               </TableRow>
-                            ))
+                            ) : (
+                              paginatedRows.map((row, idx) => (
+                                <TableRow key={row.supplier_id || idx} hover>
+                                  <TableCell sx={{ fontWeight: 500 }}>
+                                    {row.supplier_name || "Tanpa Supplier"}
+                                  </TableCell>
+                                  <TableCell>{row.phone || "-"}</TableCell>
+                                  <TableCell sx={{ maxWidth: 200 }}>{row.address || "-"}</TableCell>
+                                  <TableCell align="center">
+                                    {Number(row.total_purchases).toLocaleString("id-ID")}
+                                  </TableCell>
+                                  <TableCell align="right" sx={{ fontFamily: "monospace", color: "#DC2626" }}>
+                                    {formatCurrency(row.total_amount)}
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                          {data.bySupplier.length > 0 && (
+                            <TableFooter>
+                              <TableRow sx={{ backgroundColor: "#F9FAFB" }}>
+                                <TableCell colSpan={3} sx={{ fontWeight: 700 }}>
+                                  Total
+                                </TableCell>
+                                <TableCell align="center" sx={{ fontWeight: 700 }}>
+                                  {supplierTotals.purchases.toLocaleString("id-ID")}
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{ fontWeight: 700, fontFamily: "monospace", color: "#DC2626" }}
+                                >
+                                  {formatCurrency(supplierTotals.amount)}
+                                </TableCell>
+                              </TableRow>
+                            </TableFooter>
                           )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              )}
+                        </Table>
+                      </TableContainer>
+                    </>
+                  )}
 
-              {/* Tab 3: Top Products */}
-              {activeTab === 2 && (
-                <Card>
-                  <CardContent>
-                    <Typography variant="h6" sx={{ mb: 2 }}>Produk Terbanyak Dibeli</Typography>
-                    <TableContainer component={Paper} elevation={0}>
-                      <Table size="small">
-                        <TableHead>
-                          <TableRow sx={{ backgroundColor: "#7A2E3A" }}>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Produk</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Barcode</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }}>Kategori</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }} align="center">Total Qty</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">Total Pengeluaran</TableCell>
-                            <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">Harga Rata-rata</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {data.topProducts.length === 0 ? (
-                            <TableRow>
-                              <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary" }}>
-                                Tidak ada data produk
+                  {activeTab === 2 && (
+                    <>
+                      <Typography variant="h6" sx={{ mb: 2 }}>
+                        Produk Terbanyak Dibeli
+                      </Typography>
+                      <TableContainer component={Paper} elevation={0}>
+                        <Table size="small">
+                          <TableHead>
+                            <TableRow sx={{ backgroundColor: "#7A2E3A" }}>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }}>Produk</TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }}>Barcode</TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }}>Kategori</TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }} align="center">
+                                Total Qty
+                              </TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">
+                                Total Pengeluaran
+                              </TableCell>
+                              <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">
+                                Harga Rata-rata
                               </TableCell>
                             </TableRow>
-                          ) : (
-                            data.topProducts.map((row, idx) => (
-                              <TableRow key={idx} hover>
-                                <TableCell sx={{ fontWeight: 500 }}>{row.product_name} ({row.unit})</TableCell>
-                                <TableCell sx={{ fontFamily: "monospace" }}>{row.barcode || "-"}</TableCell>
-                                <TableCell>{row.category_name} / {row.brand_name}</TableCell>
-                                <TableCell align="center">{Number(row.total_qty).toLocaleString("id-ID")}</TableCell>
-                                <TableCell align="right" sx={{ fontFamily: "monospace", color: "#DC2626" }}>
-                                  {formatCurrency(row.total_amount)}
-                                </TableCell>
-                                <TableCell align="right" sx={{ fontFamily: "monospace" }}>
-                                  {formatCurrency(row.avg_price)}
+                          </TableHead>
+                          <TableBody>
+                            {paginatedRows.length === 0 ? (
+                              <TableRow>
+                                <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary" }}>
+                                  Tidak ada data produk
                                 </TableCell>
                               </TableRow>
-                            ))
+                            ) : (
+                              paginatedRows.map((row, idx) => (
+                                <TableRow key={row.product_id || idx} hover>
+                                  <TableCell sx={{ fontWeight: 500 }}>
+                                    {row.product_name} ({row.unit})
+                                  </TableCell>
+                                  <TableCell sx={{ fontFamily: "monospace" }}>{row.barcode || "-"}</TableCell>
+                                  <TableCell>
+                                    {row.category_name || "-"} / {row.brand_name || "-"}
+                                  </TableCell>
+                                  <TableCell align="center">
+                                    {Number(row.total_qty).toLocaleString("id-ID")}
+                                  </TableCell>
+                                  <TableCell align="right" sx={{ fontFamily: "monospace", color: "#DC2626" }}>
+                                    {formatCurrency(row.total_amount)}
+                                  </TableCell>
+                                  <TableCell align="right" sx={{ fontFamily: "monospace" }}>
+                                    {formatCurrency(row.avg_price)}
+                                  </TableCell>
+                                </TableRow>
+                              ))
+                            )}
+                          </TableBody>
+                          {data.topProducts.length > 0 && (
+                            <TableFooter>
+                              <TableRow sx={{ backgroundColor: "#F9FAFB" }}>
+                                <TableCell colSpan={3} sx={{ fontWeight: 700 }}>
+                                  Total
+                                </TableCell>
+                                <TableCell align="center" sx={{ fontWeight: 700 }}>
+                                  {productTotals.qty.toLocaleString("id-ID")}
+                                </TableCell>
+                                <TableCell
+                                  align="right"
+                                  sx={{ fontWeight: 700, fontFamily: "monospace", color: "#DC2626" }}
+                                >
+                                  {formatCurrency(productTotals.amount)}
+                                </TableCell>
+                                <TableCell align="right" sx={{ fontWeight: 700 }}>
+                                  -
+                                </TableCell>
+                              </TableRow>
+                            </TableFooter>
                           )}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
-                  </CardContent>
-                </Card>
-              )}
+                        </Table>
+                      </TableContainer>
+                    </>
+                  )}
+
+                  {activeRows.length > ROWS_PER_PAGE && (
+                    <Box sx={{ mt: 2 }}>
+                      <Pagination
+                        page={page}
+                        count={Math.ceil(activeRows.length / ROWS_PER_PAGE)}
+                        total={activeRows.length}
+                        rowsPerPage={ROWS_PER_PAGE}
+                        onPageChange={setPage}
+                      />
+                    </Box>
+                  )}
+                </CardContent>
+              </Card>
             </>
           )}
         </>
@@ -403,6 +575,8 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: 2,
     mb: 3,
   },
   title: {

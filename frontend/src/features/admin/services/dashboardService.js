@@ -3,9 +3,11 @@ import { API_ENDPOINTS } from "../../../services/api";
 
 export const dashboardService = {
   // Base stats
-  getStats: async () => {
+  getStats: async (months = 1) => {
     try {
-      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.DASHBOARD_STATS);
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.ADMIN.DASHBOARD_STATS}?months=${months}`
+      );
       return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || { message: "Gagal mengambil statistik" };
@@ -36,9 +38,11 @@ export const dashboardService = {
 
   // ===================== JASTIP =====================
 
-  getJastipOverview: async () => {
+  getJastipOverview: async (months = 1) => {
     try {
-      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.JASTIP_OVERVIEW);
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.ADMIN.JASTIP_OVERVIEW}?months=${months}`
+      );
       return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || { message: "Gagal mengambil overview jastip" };
@@ -56,7 +60,7 @@ export const dashboardService = {
     }
   },
 
-  getJastipRevenueTrendMonthly: async (months = 12) => {
+  getJastipRevenueTrendMonthly: async (months = 1) => {
     try {
       const response = await axiosInstance.get(
         `${API_ENDPOINTS.ADMIN.JASTIP_REVENUE_TREND_MONTHLY}?months=${months}`
@@ -67,10 +71,10 @@ export const dashboardService = {
     }
   },
 
-  getJastipTopVendors: async (limit = 10) => {
+  getJastipTopVendors: async (limit = 10, months = 1) => {
     try {
       const response = await axiosInstance.get(
-        `${API_ENDPOINTS.ADMIN.JASTIP_TOP_VENDORS}?limit=${limit}`
+        `${API_ENDPOINTS.ADMIN.JASTIP_TOP_VENDORS}?limit=${limit}&months=${months}`
       );
       return response.data.data || response.data;
     } catch (error) {
@@ -78,10 +82,10 @@ export const dashboardService = {
     }
   },
 
-  getJastipTopMembers: async (limit = 10) => {
+  getJastipTopMembers: async (limit = 10, months = 1) => {
     try {
       const response = await axiosInstance.get(
-        `${API_ENDPOINTS.ADMIN.JASTIP_TOP_MEMBERS}?limit=${limit}`
+        `${API_ENDPOINTS.ADMIN.JASTIP_TOP_MEMBERS}?limit=${limit}&months=${months}`
       );
       return response.data.data || response.data;
     } catch (error) {
@@ -89,10 +93,10 @@ export const dashboardService = {
     }
   },
 
-  getJastipTopMenus: async (limit = 10) => {
+  getJastipTopMenus: async (limit = 10, months = 1) => {
     try {
       const response = await axiosInstance.get(
-        `${API_ENDPOINTS.ADMIN.JASTIP_TOP_MENUS}?limit=${limit}`
+        `${API_ENDPOINTS.ADMIN.JASTIP_TOP_MENUS}?limit=${limit}&months=${months}`
       );
       return response.data.data || response.data;
     } catch (error) {
@@ -102,9 +106,11 @@ export const dashboardService = {
 
   // ===================== RETAIL =====================
 
-  getRetailOverview: async () => {
+  getRetailOverview: async (months = 1) => {
     try {
-      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.RETAIL_OVERVIEW);
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.ADMIN.RETAIL_OVERVIEW}?months=${months}`
+      );
       return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || { message: "Gagal mengambil overview retail" };
@@ -122,7 +128,7 @@ export const dashboardService = {
     }
   },
 
-  getRetailSalesTrendMonthly: async (months = 12) => {
+  getRetailSalesTrendMonthly: async (months = 1) => {
     try {
       const response = await axiosInstance.get(
         `${API_ENDPOINTS.ADMIN.RETAIL_SALES_TREND_MONTHLY}?months=${months}`
@@ -133,10 +139,10 @@ export const dashboardService = {
     }
   },
 
-  getSalesByCategory: async (limit = 10) => {
+  getSalesByCategory: async (limit = 10, months = 1) => {
     try {
       const response = await axiosInstance.get(
-        `${API_ENDPOINTS.ADMIN.RETAIL_SALES_BY_CATEGORY}?limit=${limit}`
+        `${API_ENDPOINTS.ADMIN.RETAIL_SALES_BY_CATEGORY}?limit=${limit}&months=${months}`
       );
       return response.data.data || response.data;
     } catch (error) {
@@ -144,10 +150,10 @@ export const dashboardService = {
     }
   },
 
-  getSalesBySubcategory: async (limit = 10) => {
+  getSalesBySubcategory: async (limit = 10, months = 1) => {
     try {
       const response = await axiosInstance.get(
-        `${API_ENDPOINTS.ADMIN.RETAIL_SALES_BY_SUBCATEGORY}?limit=${limit}`
+        `${API_ENDPOINTS.ADMIN.RETAIL_SALES_BY_SUBCATEGORY}?limit=${limit}&months=${months}`
       );
       return response.data.data || response.data;
     } catch (error) {
@@ -155,10 +161,10 @@ export const dashboardService = {
     }
   },
 
-  getTopSellingProducts: async (limit = 10) => {
+  getTopSellingProducts: async (limit = 10, months = 1) => {
     try {
       const response = await axiosInstance.get(
-        `${API_ENDPOINTS.ADMIN.RETAIL_TOP_PRODUCTS}?limit=${limit}`
+        `${API_ENDPOINTS.ADMIN.RETAIL_TOP_PRODUCTS}?limit=${limit}&months=${months}`
       );
       return response.data.data || response.data;
     } catch (error) {
@@ -190,16 +196,18 @@ export const dashboardService = {
 
   // ===================== SHU =====================
 
-  getSHUOverview: async () => {
+  getSHUOverview: async (months = 1) => {
     try {
-      const response = await axiosInstance.get(API_ENDPOINTS.ADMIN.SHU_OVERVIEW);
+      const response = await axiosInstance.get(
+        `${API_ENDPOINTS.ADMIN.SHU_OVERVIEW}?months=${months}`
+      );
       return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || { message: "Gagal mengambil overview SHU" };
     }
   },
 
-  getMonthlySHUComparison: async (months = 12) => {
+  getMonthlySHUComparison: async (months = 1) => {
     try {
       const response = await axiosInstance.get(
         `${API_ENDPOINTS.ADMIN.SHU_MONTHLY_COMPARISON}?months=${months}`
@@ -219,9 +227,11 @@ export const dashboardService = {
     }
   },
 
-  getJastipOrdersByDivision: async () => {
+  getJastipOrdersByDivision: async (months = 1) => {
     try {
-      const response = await axiosInstance.get("/admin/dashboard/jastip/orders-by-division");
+      const response = await axiosInstance.get(
+        `/admin/dashboard/jastip/orders-by-division?months=${months}`
+      );
       return response.data.data || response.data;
     } catch (error) {
       throw error.response?.data || { message: "Gagal mengambil data pemesanan per divisi" };

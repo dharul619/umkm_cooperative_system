@@ -56,8 +56,10 @@ exports.getPenjualanRetailDetails = async (req, res) => {
  */
 exports.getStokRetail = async (req, res) => {
   try {
-    const { category_id, subcategory_id, brand_id } = req.query;
+    const { from, to, category_id, subcategory_id, brand_id } = req.query;
     const data = await model.getStokRetail({
+      from,
+      to,
       category_id,
       subcategory_id,
       brand_id,

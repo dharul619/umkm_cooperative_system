@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   Card,
@@ -10,26 +10,25 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableFooter,
   Paper,
   Chip,
   CircularProgress,
   Alert,
-  IconButton,
   Tooltip,
 } from "@mui/material";
-import { FaPrint, FaFilePdf, FaChartLine, FaList } from "react-icons/fa";
+import { FaPrint, FaChartLine, FaList } from "react-icons/fa";
 import ReportFilter from "../../components/reports/ReportFilter";
-import AppButton from "../../../../shared/components/AppButton";
+import { AppButton, Pagination } from "../../../../shared/components";
 import axiosInstance from "../../../../services/axiosInstace";
 import {
   formatCurrency,
   formatDate,
   generateProfessionalPDF,
   openProfessionalPDF,
-  generateSummaryCards,
-  generateTable,
-  generateSectionTitle,
 } from "../../../../shared/utils/pdfExport";
+
+const ROWS_PER_PAGE = 20;
 
 export default function PenjualanRetailPage() {
   const [summary, setSummary] = useState(null);
@@ -37,6 +36,7 @@ export default function PenjualanRetailPage() {
   const [productDetails, setProductDetails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
     from: "",
     to: "",
@@ -44,19 +44,12 @@ export default function PenjualanRetailPage() {
     subcategory_id: "",
     brand_id: "",
     mode: "summary",
+    filterLabels: {},
   });
 
-  useEffect(() => {
-    fetchReport();
-  }, [filters]);
+  const fetchReport = useCallback(async () => {
+    if (!filters.from || !filters.to) return;
 
-  const fetchReport = async () => {
-    if (!filters.from || !filters.to) {
-      setSummary(null);
-      setDailySummary([]);
-      setProductDetails([]);
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
@@ -91,66 +84,133 @@ export default function PenjualanRetailPage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [
+    filters.from,
+    filters.to,
+    filters.category_id,
+    filters.subcategory_id,
+    filters.brand_id,
+    filters.mode,
+  ]);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.resolve().then(() => {
+      if (mounted) {
+        fetchReport();
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [fetchReport]);
 
   const handleFilterChange = (newFilters) => {
+    setPage(1);
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
 
+  const dailyTotals = useMemo(
+    () =>
+      dailySummary.reduce(
+        (acc, curr) => {
+          acc.transactions += Number(curr.total_transactions || 0);
+          acc.sales += Number(curr.total_penjualan || 0);
+          acc.profit += Number(curr.total_profit || 0);
+          acc.kopi += Number(curr.kopi_share || 0);
+          return acc;
+        },
+        { transactions: 0, sales: 0, profit: 0, kopi: 0 }
+      ),
+    [dailySummary]
+  );
+
+  const productTotals = useMemo(
+    () =>
+      productDetails.reduce(
+        (acc, curr) => {
+          acc.qty += Number(curr.total_qty || 0);
+          acc.sales += Number(curr.total_penjualan || 0);
+          acc.profit += Number(curr.total_profit || 0);
+          return acc;
+        },
+        { qty: 0, sales: 0, profit: 0 }
+      ),
+    [productDetails]
+  );
+
+  const activeRows = filters.mode === "summary" ? dailySummary : productDetails;
+  const paginatedRows = useMemo(
+    () => activeRows.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
+    [activeRows, page]
+  );
+
   const handleExportPDF = () => {
+    const labels = filters.filterLabels || {};
     const filtersInfo = [];
     if (filters.from) filtersInfo.push(`Dari Tanggal: ${formatDate(filters.from)}`);
     if (filters.to) filtersInfo.push(`Ke Tanggal: ${formatDate(filters.to)}`);
-    if (filters.category_id) filtersInfo.push(`Kategori: ${filters.category_id}`);
-    if (filters.brand_id) filtersInfo.push(`Brand: ${filters.brand_id}`);
+    if (filters.category_id) filtersInfo.push(`Kategori: ${labels.category || filters.category_id}`);
+    if (filters.subcategory_id) filtersInfo.push(`Sub Kategori: ${labels.subcategory || filters.subcategory_id}`);
+    if (filters.brand_id) filtersInfo.push(`Brand: ${labels.brand || filters.brand_id}`);
 
-    let sections = [];
-
-    if (filters.mode === "summary") {
-      sections = [
-        {
-          title: "Ringkasan Harian",
-          subtitle: "Total penjualan per hari dalam periode yang dipilih",
-          headers: [
-            { label: "Tanggal", align: "left" },
-            { label: "Transaksi", align: "center" },
-            { label: "Total Penjualan", align: "right" },
-            { label: "Total Profit", align: "right" },
-            { label: "SHU Koperasi", align: "right" },
-          ],
-          rows: dailySummary.map((d) => [
-            formatDate(d.date),
-            Number(d.total_transactions).toLocaleString("id-ID"),
-            formatCurrency(d.total_penjualan),
-            formatCurrency(d.total_profit),
-            formatCurrency(d.kopi_share),
-          ]),
-        },
-      ];
-    } else {
-      sections = [
-        {
-          title: "Detail Produk Terjual",
-          subtitle: "Rincian penjualan per produk",
-          headers: [
-            { label: "Produk", align: "left" },
-            { label: "Barcode", align: "center" },
-            { label: "Kategori", align: "left" },
-            { label: "Qty", align: "center" },
-            { label: "Total Penjualan", align: "right" },
-            { label: "Profit", align: "right" },
-          ],
-          rows: productDetails.map((p) => [
-            `${p.product_name} (${p.unit})`,
-            p.barcode || "-",
-            `${p.category_name || "-"} / ${p.subcategory_name || "-"}`,
-            Number(p.total_qty).toLocaleString("id-ID"),
-            formatCurrency(p.total_penjualan),
-            formatCurrency(p.total_profit),
-          ]),
-        },
-      ];
-    }
+    const sections =
+      filters.mode === "summary"
+        ? [
+            {
+              title: "Ringkasan Harian",
+              subtitle: "Total penjualan per hari dalam periode terpilih",
+              headers: [
+                { label: "Tanggal", align: "left" },
+                { label: "Transaksi", align: "center" },
+                { label: "Total Penjualan", align: "right" },
+                { label: "Total Profit", align: "right" },
+                { label: "SHU Koperasi", align: "right" },
+              ],
+              rows: dailySummary.map((d) => [
+                formatDate(d.date),
+                Number(d.total_transactions).toLocaleString("id-ID"),
+                formatCurrency(d.total_penjualan),
+                formatCurrency(d.total_profit),
+                formatCurrency(d.kopi_share),
+              ]),
+              footerRow: [
+                "Total",
+                dailyTotals.transactions.toLocaleString("id-ID"),
+                formatCurrency(dailyTotals.sales),
+                formatCurrency(dailyTotals.profit),
+                formatCurrency(dailyTotals.kopi),
+              ],
+            },
+          ]
+        : [
+            {
+              title: "Detail Produk Terjual",
+              subtitle: "Rincian penjualan per produk",
+              headers: [
+                { label: "Produk", align: "left" },
+                { label: "Barcode", align: "center" },
+                { label: "Kategori", align: "left" },
+                { label: "Qty", align: "center" },
+                { label: "Total Penjualan", align: "right" },
+                { label: "Profit", align: "right" },
+              ],
+              rows: productDetails.map((p) => [
+                `${p.product_name} (${p.unit})`,
+                p.barcode || "-",
+                `${p.category_name || "-"} / ${p.subcategory_name || "-"}`,
+                Number(p.total_qty).toLocaleString("id-ID"),
+                formatCurrency(p.total_penjualan),
+                formatCurrency(p.total_profit),
+              ]),
+              footerRow: [
+                { label: "Total", colSpan: 3, align: "left" },
+                productTotals.qty.toLocaleString("id-ID"),
+                formatCurrency(productTotals.sales),
+                formatCurrency(productTotals.profit),
+              ],
+            },
+          ];
 
     const summaryCards = [
       { key: "total_transactions", label: "Total Transaksi", format: "number", color: "#7A2E3A", bgColor: "#fef2f2" },
@@ -173,7 +233,7 @@ export default function PenjualanRetailPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2 } }}>
       {/* Header */}
       <Box sx={styles.header}>
         <Box>
@@ -181,36 +241,33 @@ export default function PenjualanRetailPage() {
             Laporan Penjualan Retail
           </Typography>
           <Typography variant="body2" sx={styles.subtitle}>
-            Laporan penjualan produk retail dengan berbagai filter dan opsi export
+            Ringkasan penjualan, profit, dan rincian produk terjual
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Tooltip title="Export PDF">
-            <AppButton
-              color="primary"
-              onClick={handleExportPDF}
-              startIcon={<FaPrint />}
-              disabled={loading || !summary}
-            >
-              Export PDF
-            </AppButton>
+            <span>
+              <AppButton
+                color="primary"
+                onClick={handleExportPDF}
+                startIcon={<FaPrint />}
+                disabled={loading || !summary}
+              >
+                Export PDF
+              </AppButton>
+            </span>
           </Tooltip>
         </Box>
       </Box>
 
       {/* Filter */}
-      <ReportFilter onFilterChange={handleFilterChange} />
+      <ReportFilter onFilterChange={handleFilterChange} loading={loading} />
 
-      {/* Summary Cards */}
-      {/* Date Filter Placeholder */}
       {!filters.from || !filters.to ? (
-        <Card sx={{ mt: 3, p: 4, textAlign: "center", border: "2px dashed #F9D5DC", backgroundColor: "#FFFBFC" }}>
+        <Card sx={{ mt: 2, p: 4, textAlign: "center", border: "2px dashed #F9D5DC", backgroundColor: "#FFFBFC" }}>
           <CardContent>
             <Typography variant="h6" fontWeight={700} color="#7A2E3A" gutterBottom>
-              Rentang Tanggal Belum Ditentukan
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Silakan pilih tanggal "Dari Tanggal" dan "Ke Tanggal" pada filter di atas untuk memuat laporan.
+              Memuat Periode Laporan...
             </Typography>
           </CardContent>
         </Card>
@@ -254,7 +311,7 @@ export default function PenjualanRetailPage() {
             </Box>
           )}
 
-          {/* Loading/Error */}
+          {/* Loading / Error */}
           {loading && (
             <Box sx={styles.loadingContainer}>
               <CircularProgress color="inherit" />
@@ -290,7 +347,7 @@ export default function PenjualanRetailPage() {
 
           {/* Data Table */}
           {!loading && !error && (
-            <Card sx={{ mt: 2 }}>
+            <Card>
               <CardContent>
                 {filters.mode === "summary" ? (
                   <>
@@ -309,17 +366,19 @@ export default function PenjualanRetailPage() {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {dailySummary.length === 0 ? (
+                          {paginatedRows.length === 0 ? (
                             <TableRow>
                               <TableCell colSpan={5} align="center" sx={{ py: 4, color: "text.secondary" }}>
                                 Tidak ada data untuk periode ini
                               </TableCell>
                             </TableRow>
                           ) : (
-                            dailySummary.map((row, idx) => (
-                              <TableRow key={idx} hover>
+                            paginatedRows.map((row, idx) => (
+                              <TableRow key={row.date || idx} hover>
                                 <TableCell>{formatDate(row.date)}</TableCell>
-                                <TableCell align="center">{Number(row.total_transactions).toLocaleString("id-ID")}</TableCell>
+                                <TableCell align="center">
+                                  {Number(row.total_transactions).toLocaleString("id-ID")}
+                                </TableCell>
                                 <TableCell align="right" sx={{ fontFamily: "monospace" }}>
                                   {formatCurrency(row.total_penjualan)}
                                 </TableCell>
@@ -333,6 +392,25 @@ export default function PenjualanRetailPage() {
                             ))
                           )}
                         </TableBody>
+                        {dailySummary.length > 0 && (
+                          <TableFooter>
+                            <TableRow sx={{ backgroundColor: "#F9FAFB" }}>
+                              <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 700 }}>
+                                {dailyTotals.transactions.toLocaleString("id-ID")}
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 700, fontFamily: "monospace" }}>
+                                {formatCurrency(dailyTotals.sales)}
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 700, fontFamily: "monospace" }}>
+                                {formatCurrency(dailyTotals.profit)}
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 700, fontFamily: "monospace" }}>
+                                {formatCurrency(dailyTotals.kopi)}
+                              </TableCell>
+                            </TableRow>
+                          </TableFooter>
+                        )}
                       </Table>
                     </TableContainer>
                   </>
@@ -354,19 +432,25 @@ export default function PenjualanRetailPage() {
                           </TableRow>
                         </TableHead>
                         <TableBody>
-                          {productDetails.length === 0 ? (
+                          {paginatedRows.length === 0 ? (
                             <TableRow>
                               <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary" }}>
                                 Tidak ada data untuk periode ini
                               </TableCell>
                             </TableRow>
                           ) : (
-                            productDetails.map((row, idx) => (
-                              <TableRow key={idx} hover>
-                                <TableCell>{row.product_name} ({row.unit})</TableCell>
+                            paginatedRows.map((row, idx) => (
+                              <TableRow key={row.id || idx} hover>
+                                <TableCell>
+                                  {row.product_name} ({row.unit})
+                                </TableCell>
                                 <TableCell sx={{ fontFamily: "monospace" }}>{row.barcode || "-"}</TableCell>
-                                <TableCell>{row.category_name} / {row.subcategory_name}</TableCell>
-                                <TableCell align="center">{Number(row.total_qty).toLocaleString("id-ID")}</TableCell>
+                                <TableCell>
+                                  {row.category_name || "-"} / {row.subcategory_name || "-"}
+                                </TableCell>
+                                <TableCell align="center">
+                                  {Number(row.total_qty).toLocaleString("id-ID")}
+                                </TableCell>
                                 <TableCell align="right" sx={{ fontFamily: "monospace" }}>
                                   {formatCurrency(row.total_penjualan)}
                                 </TableCell>
@@ -377,9 +461,39 @@ export default function PenjualanRetailPage() {
                             ))
                           )}
                         </TableBody>
+                        {productDetails.length > 0 && (
+                          <TableFooter>
+                            <TableRow sx={{ backgroundColor: "#F9FAFB" }}>
+                              <TableCell colSpan={3} sx={{ fontWeight: 700 }}>
+                                Total
+                              </TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 700 }}>
+                                {productTotals.qty.toLocaleString("id-ID")}
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 700, fontFamily: "monospace" }}>
+                                {formatCurrency(productTotals.sales)}
+                              </TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 700, fontFamily: "monospace" }}>
+                                {formatCurrency(productTotals.profit)}
+                              </TableCell>
+                            </TableRow>
+                          </TableFooter>
+                        )}
                       </Table>
                     </TableContainer>
                   </>
+                )}
+
+                {activeRows.length > ROWS_PER_PAGE && (
+                  <Box sx={{ mt: 2 }}>
+                    <Pagination
+                      page={page}
+                      count={Math.ceil(activeRows.length / ROWS_PER_PAGE)}
+                      total={activeRows.length}
+                      rowsPerPage={ROWS_PER_PAGE}
+                      onPageChange={setPage}
+                    />
+                  </Box>
                 )}
               </CardContent>
             </Card>
@@ -395,6 +509,8 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: 2,
     mb: 3,
   },
   title: {

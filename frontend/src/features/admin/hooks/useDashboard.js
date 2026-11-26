@@ -1,16 +1,15 @@
 import { useCallback, useEffect, useState } from "react";
 import { dashboardService } from "../services/dashboardService";
 import { userService } from "../../users/services/userService";
+import { predictionService } from "../../retail/predictions/services/predictionService";
 
 export const useDashboard = () => {
-  const [months, setMonths] = useState(12);
+  const [months, setMonths] = useState(1);
   const [stats, setStats] = useState(null);
-  const [userGrowth, setUserGrowth] = useState([]);
-  const [activitySummary, setActivitySummary] = useState([]);
   const [jastip, setJastip] = useState(null);
   const [retail, setRetail] = useState(null);
   const [shu, setShu] = useState(null);
-  const [paymentMethods, setPaymentMethods] = useState([]);
+  const [predictions, setPredictions] = useState(null);
   const [pendingUsers, setPendingUsers] = useState([]);
   const [usersByDivision, setUsersByDivision] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -23,8 +22,6 @@ export const useDashboard = () => {
 
       const [
         statsData,
-        growthData,
-        activityData,
         jastipData,
         jastipTrend,
         jastipVendors,
@@ -40,38 +37,34 @@ export const useDashboard = () => {
         shuComparison,
         retailInventorySubcategory,
         jastipDivisions,
-        paymentsData,
         allUsersData,
         usersByDivisionData,
+        predictionsData,
       ] = await Promise.allSettled([
-        dashboardService.getStats(),
-        dashboardService.getUserGrowth(months),
-        dashboardService.getActivitySummary(10),
-        dashboardService.getJastipOverview(),
+        dashboardService.getStats(months),
+        dashboardService.getJastipOverview(months),
         dashboardService.getJastipRevenueTrendMonthly(months),
-        dashboardService.getJastipTopVendors(10),
-        dashboardService.getJastipTopMembers(10),
-        dashboardService.getJastipTopMenus(10),
-        dashboardService.getRetailOverview(),
+        dashboardService.getJastipTopVendors(10, months),
+        dashboardService.getJastipTopMembers(10, months),
+        dashboardService.getJastipTopMenus(10, months),
+        dashboardService.getRetailOverview(months),
         dashboardService.getRetailSalesTrendMonthly(months),
-        dashboardService.getSalesByCategory(10),
-        dashboardService.getSalesBySubcategory(10),
-        dashboardService.getTopSellingProducts(10),
+        dashboardService.getSalesByCategory(10, months),
+        dashboardService.getSalesBySubcategory(10, months),
+        dashboardService.getTopSellingProducts(10, months),
         dashboardService.getLowStockProducts(20),
-        dashboardService.getSHUOverview(),
+        dashboardService.getSHUOverview(months),
         dashboardService.getMonthlySHUComparison(months),
         dashboardService.getInventoryBySubcategory(),
-        dashboardService.getJastipOrdersByDivision(),
-        dashboardService.getPaymentMethodStats(),
+        dashboardService.getJastipOrdersByDivision(months),
         userService.getAll(),
         dashboardService.getUserCountByDivision(),
+        predictionService.getSummary(),
       ]);
 
       setStats(statsData.status === "fulfilled" ? statsData.value : null);
-      setUserGrowth(growthData.status === "fulfilled" ? growthData.value : []);
-      setActivitySummary(activityData.status === "fulfilled" ? activityData.value : []);
-      setPaymentMethods(paymentsData.status === "fulfilled" ? paymentsData.value : []);
       setUsersByDivision(usersByDivisionData.status === "fulfilled" ? usersByDivisionData.value : []);
+      setPredictions(predictionsData.status === "fulfilled" ? predictionsData.value : null);
 
       const fetchedUsers = allUsersData.status === "fulfilled" ? allUsersData.value : [];
       setPendingUsers(fetchedUsers.filter((u) => u.status === "pending"));
@@ -143,12 +136,10 @@ export const useDashboard = () => {
 
   return {
     stats,
-    userGrowth,
-    activitySummary,
     jastip,
     retail,
     shu,
-    paymentMethods,
+    predictions,
     pendingUsers,
     usersByDivision,
     approveUser,

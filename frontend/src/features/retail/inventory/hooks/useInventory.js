@@ -54,7 +54,7 @@ export const useInventory = () => {
     }
   };
 
-  const getStockCard = async (productId) => inventoryService.getStockCard(productId);
+  const getStockCard = async (productId, params = {}) => inventoryService.getStockCard(productId, params);
 
   return {
     stocks,

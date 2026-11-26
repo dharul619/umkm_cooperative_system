@@ -16,9 +16,9 @@ export const inventoryService = {
       handleError(error, "Gagal mengambil data stok");
     }
   },
-  getStockCard: async (productId) => {
+  getStockCard: async (productId, params = {}) => {
     try {
-      const response = await axiosInstance.get(`${INVENTORY_BASE}/stocks/${productId}`);
+      const response = await axiosInstance.get(`${INVENTORY_BASE}/stocks/${productId}`, { params });
       return response.data.data ?? response.data;
     } catch (error) {
       handleError(error, "Gagal mengambil kartu stok");

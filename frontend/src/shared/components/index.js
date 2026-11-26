@@ -8,6 +8,7 @@ export { default as Loading } from "./Loading";
 export { default as Navbar } from "./Navbar";
 export { default as PageContainer } from "./PageContainer";
 export { default as PageHeader } from "./PageHeader";
+export { default as Pagination } from "./Pagination";
 export { default as SectionToolbar } from "./SectionToolbar";
 export { default as Sidebar } from "./Sidebar";
 export { default as StatusAlert } from "./StatusAlert";

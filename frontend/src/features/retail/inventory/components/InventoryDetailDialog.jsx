@@ -8,7 +8,7 @@
   Typography,
 } from "@mui/material";
 import Inventory2Rounded from "@mui/icons-material/Inventory2Rounded";
-import { AppButton } from "../../../../shared/components";
+import { AppButton, Loading, Pagination } from "../../../../shared/components";
 
 const formatDateTime = (value) => {
   if (!value) return "-";
@@ -18,11 +18,10 @@ const formatDateTime = (value) => {
     : date.toLocaleString("id-ID", { dateStyle: "medium", timeStyle: "short" });
 };
 
-const money = (value) => `Rp ${Number(value || 0).toLocaleString("id-ID")}`;
-
-const InventoryDetailDialog = ({ open, data, onClose }) => {
+const InventoryDetailDialog = ({ open, data, loading = false, onPageChange, onClose }) => {
   const product = data?.product;
   const transactions = data?.transactions || [];
+  const pagination = data?.pagination;
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
@@ -40,7 +39,9 @@ const InventoryDetailDialog = ({ open, data, onClose }) => {
         </Box>
       </DialogTitle>
       <DialogContent sx={{ px: 3, pb: 3 }}>
-        {!product ? (
+        {loading && !product ? (
+          <Loading message="Memuat kartu stok..." />
+        ) : !product ? (
           <Typography color="text.secondary">Data produk belum dipilih.</Typography>
         ) : (
           <Stack spacing={2.25}>
@@ -67,34 +68,48 @@ const InventoryDetailDialog = ({ open, data, onClose }) => {
                   Riwayat Transaksi
                 </Typography>
               </Box>
-              <Stack divider={<Divider flexItem />}>
-                {transactions.length ? (
-                  transactions.map((item) => (
-                    <Box key={item.id} sx={{ px: 2, py: 1.5, display: "flex", justifyContent: "space-between", gap: 2 }}>
-                      <Box>
-                        <Typography fontWeight={800}>{item.reference_type || "-"}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {formatDateTime(item.created_at)}
-                        </Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          Note: {item.note || "-"}
-                        </Typography>
+              {loading ? (
+                <Loading message="Memuat riwayat stok..." />
+              ) : (
+                <Stack divider={<Divider flexItem />}>
+                  {transactions.length ? (
+                    transactions.map((item) => (
+                      <Box key={item.id} sx={{ px: 2, py: 1.5, display: "flex", justifyContent: "space-between", gap: 2 }}>
+                        <Box>
+                          <Typography fontWeight={800}>{item.reference_type || "-"}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {formatDateTime(item.created_at)}
+                          </Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            Note: {item.note || "-"}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: "right" }}>
+                          <Typography fontWeight={800}>{item.type} {Number(item.qty || 0)}</Typography>
+                          <Typography variant="body2" color="text.secondary">
+                            {item.reference_type === "SALE" || item.reference_type === "PURCHASE" ? `Ref #${item.reference_id || "-"}` : ""}
+                          </Typography>
+                        </Box>
                       </Box>
-                      <Box sx={{ textAlign: "right" }}>
-                        <Typography fontWeight={800}>{item.type} {Number(item.qty || 0)}</Typography>
-                        <Typography variant="body2" color="text.secondary">
-                          {item.reference_type === "SALE" || item.reference_type === "PURCHASE" ? `Ref #${item.reference_id || "-"}` : ""}
-                        </Typography>
-                      </Box>
+                    ))
+                  ) : (
+                    <Box sx={{ px: 2, py: 2 }}>
+                      <Typography color="text.secondary">Tidak ada riwayat stok.</Typography>
                     </Box>
-                  ))
-                ) : (
-                  <Box sx={{ px: 2, py: 2 }}>
-                    <Typography color="text.secondary">Tidak ada riwayat stok.</Typography>
-                  </Box>
-                )}
-              </Stack>
+                  )}
+                </Stack>
+              )}
             </Box>
+
+            {pagination && pagination.total > 0 && onPageChange ? (
+              <Pagination
+                page={pagination.page}
+                count={pagination.totalPages}
+                total={pagination.total}
+                rowsPerPage={pagination.limit}
+                onPageChange={onPageChange}
+              />
+            ) : null}
           </Stack>
         )}
       </DialogContent>

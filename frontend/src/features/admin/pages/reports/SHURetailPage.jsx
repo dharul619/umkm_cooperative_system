@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import {
   Box,
   Card,
@@ -10,15 +10,15 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TableFooter,
   Paper,
   CircularProgress,
   Alert,
-  Grid,
   Tooltip,
 } from "@mui/material";
-import { FaPrint, FaWallet, FaChartLine, FaPercentage } from "react-icons/fa";
+import { FaPrint, FaChartLine } from "react-icons/fa";
 import ReportFilter from "../../components/reports/ReportFilter";
-import AppButton from "../../../../shared/components/AppButton";
+import { AppButton, Pagination } from "../../../../shared/components";
 import axiosInstance from "../../../../services/axiosInstace";
 import {
   formatCurrency,
@@ -27,6 +27,8 @@ import {
   openProfessionalPDF,
 } from "../../../../shared/utils/pdfExport";
 
+const ROWS_PER_PAGE = 20;
+
 export default function SHURetailPage() {
   const [data, setData] = useState({
     summary: {},
@@ -34,23 +36,15 @@ export default function SHURetailPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
   const [filters, setFilters] = useState({
     from: "",
     to: "",
   });
 
-  useEffect(() => {
-    fetchReport();
-  }, [filters]);
+  const fetchReport = useCallback(async () => {
+    if (!filters.from || !filters.to) return;
 
-  const fetchReport = async () => {
-    if (!filters.from || !filters.to) {
-      setData({
-        summary: {},
-        monthlySummary: [],
-      });
-      return;
-    }
     setLoading(true);
     setError(null);
     try {
@@ -58,7 +52,7 @@ export default function SHURetailPage() {
       if (filters.from) params.append("from", filters.from);
       if (filters.to) params.append("to", filters.to);
 
-      const response = await axiosInstance.get(`/admin/reports/shu-retail`, { params });
+      const response = await axiosInstance.get("/admin/reports/shu-retail", { params });
       const result = response.data;
 
       if (result.success) {
@@ -67,15 +61,49 @@ export default function SHURetailPage() {
         setError(result.message || "Gagal mengambil data laporan");
       }
     } catch (err) {
-      setError("Terjadi kesalahan koneksi");
+      setError(err.message || "Terjadi kesalahan koneksi");
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters.from, filters.to]);
+
+  useEffect(() => {
+    let mounted = true;
+    Promise.resolve().then(() => {
+      if (mounted) {
+        fetchReport();
+      }
+    });
+    return () => {
+      mounted = false;
+    };
+  }, [fetchReport]);
 
   const handleFilterChange = (newFilters) => {
+    setPage(1);
     setFilters((prev) => ({ ...prev, ...newFilters }));
   };
+
+  const monthlyTotals = useMemo(
+    () =>
+      data.monthlySummary.reduce(
+        (acc, curr) => {
+          acc.transactions += Number(curr.total_transactions || 0);
+          acc.sales += Number(curr.total_penjualan || 0);
+          acc.profit += Number(curr.total_profit || 0);
+          acc.kopi += Number(curr.kopi_share || 0);
+          acc.coordinator += Number(curr.coordinator_share || 0);
+          return acc;
+        },
+        { transactions: 0, sales: 0, profit: 0, kopi: 0, coordinator: 0 }
+      ),
+    [data.monthlySummary]
+  );
+
+  const paginatedRows = useMemo(
+    () => data.monthlySummary.slice((page - 1) * ROWS_PER_PAGE, page * ROWS_PER_PAGE),
+    [data.monthlySummary, page]
+  );
 
   const handleExportPDF = () => {
     const filtersInfo = [];
@@ -110,6 +138,14 @@ export default function SHURetailPage() {
           formatCurrency(m.kopi_share),
           formatCurrency(m.coordinator_share),
         ]),
+        footerRow: [
+          "Total",
+          monthlyTotals.transactions.toLocaleString("id-ID"),
+          formatCurrency(monthlyTotals.sales),
+          formatCurrency(monthlyTotals.profit),
+          formatCurrency(monthlyTotals.kopi),
+          formatCurrency(monthlyTotals.coordinator),
+        ],
       },
     ];
 
@@ -127,7 +163,7 @@ export default function SHURetailPage() {
   };
 
   return (
-    <Box sx={{ p: 3 }}>
+    <Box sx={{ p: { xs: 1, sm: 2 } }}>
       {/* Header */}
       <Box sx={styles.header}>
         <Box>
@@ -135,36 +171,33 @@ export default function SHURetailPage() {
             Pembagian SHU - Warung Retail
           </Typography>
           <Typography variant="body2" sx={styles.subtitle}>
-            Laporan sisa hasil usaha dari penjualan retail
+            Rekapitulasi pembagian SHU penjualan warung retail
           </Typography>
         </Box>
         <Box sx={{ display: "flex", gap: 1 }}>
           <Tooltip title="Export PDF">
-            <AppButton
-              color="primary"
-              onClick={handleExportPDF}
-              startIcon={<FaPrint />}
-              disabled={loading}
-            >
-              Export PDF
-            </AppButton>
+            <span>
+              <AppButton
+                color="primary"
+                onClick={handleExportPDF}
+                startIcon={<FaPrint />}
+                disabled={loading || !filters.from || !filters.to}
+              >
+                Export PDF
+              </AppButton>
+            </span>
           </Tooltip>
         </Box>
       </Box>
 
-      {/* Filter */}
-      <ReportFilter onFilterChange={handleFilterChange} />
+      {/* Filter (Tanggal saja) */}
+      <ReportFilter onFilterChange={handleFilterChange} loading={loading} hideCategory={true} />
 
-      {/* Summary Cards */}
-      {/* Date Filter Placeholder */}
       {!filters.from || !filters.to ? (
-        <Card sx={{ mt: 3, p: 4, textAlign: "center", border: "2px dashed #F9D5DC", backgroundColor: "#FFFBFC" }}>
+        <Card sx={{ mt: 2, p: 4, textAlign: "center", border: "2px dashed #F9D5DC", backgroundColor: "#FFFBFC" }}>
           <CardContent>
             <Typography variant="h6" fontWeight={700} color="#7A2E3A" gutterBottom>
-              Rentang Tanggal Belum Ditentukan
-            </Typography>
-            <Typography variant="body2" color="text.secondary">
-              Silakan pilih tanggal "Dari Tanggal" dan "Ke Tanggal" pada filter di atas untuk memuat laporan.
+              Memuat Periode Laporan...
             </Typography>
           </CardContent>
         </Card>
@@ -199,7 +232,7 @@ export default function SHURetailPage() {
               </Box>
               <Box sx={{ ...styles.summaryCard, borderColor: "#7A2E3A", borderWidth: 2, borderStyle: "solid" }}>
                 <Typography variant="caption" color="text.secondary">
-                  SHU Koperasi (80% Profit)
+                  SHU Koperasi (80%)
                 </Typography>
                 <Typography variant="h5" sx={{ color: "#7A2E3A", fontWeight: 700 }}>
                   {formatCurrency(data.summary.kopi_share)}
@@ -207,7 +240,7 @@ export default function SHURetailPage() {
               </Box>
               <Box sx={{ ...styles.summaryCard, borderColor: "#E85D75", borderWidth: 2, borderStyle: "solid" }}>
                 <Typography variant="caption" color="text.secondary">
-                  SHU Coordinator (20% Profit)
+                  SHU Coordinator (20%)
                 </Typography>
                 <Typography variant="h5" sx={{ color: "#E85D75", fontWeight: 700 }}>
                   {formatCurrency(data.summary.coordinator_share)}
@@ -216,7 +249,7 @@ export default function SHURetailPage() {
             </Box>
           )}
 
-          {/* Loading/Error */}
+          {/* Loading / Error */}
           {loading && (
             <Box sx={styles.loadingContainer}>
               <CircularProgress color="inherit" />
@@ -243,25 +276,37 @@ export default function SHURetailPage() {
                     <TableHead>
                       <TableRow sx={{ backgroundColor: "#7A2E3A" }}>
                         <TableCell sx={{ color: "white", fontWeight: 600 }}>Bulan</TableCell>
-                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="center">Transaksi</TableCell>
-                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">Total Penjualan</TableCell>
-                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">Total Profit</TableCell>
-                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">SHU Koperasi (80%)</TableCell>
-                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">SHU Coordinator (20%)</TableCell>
+                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="center">
+                          Transaksi
+                        </TableCell>
+                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">
+                          Total Penjualan
+                        </TableCell>
+                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">
+                          Total Profit
+                        </TableCell>
+                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">
+                          SHU Koperasi (80%)
+                        </TableCell>
+                        <TableCell sx={{ color: "white", fontWeight: 600 }} align="right">
+                          SHU Coordinator (20%)
+                        </TableCell>
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {data.monthlySummary.length === 0 ? (
+                      {paginatedRows.length === 0 ? (
                         <TableRow>
                           <TableCell colSpan={6} align="center" sx={{ py: 4, color: "text.secondary" }}>
                             Tidak ada data untuk periode ini
                           </TableCell>
                         </TableRow>
                       ) : (
-                        data.monthlySummary.map((row, idx) => (
-                          <TableRow key={idx} hover>
+                        paginatedRows.map((row, idx) => (
+                          <TableRow key={row.month || idx} hover>
                             <TableCell sx={{ fontWeight: 500 }}>{row.month_name}</TableCell>
-                            <TableCell align="center">{Number(row.total_transactions).toLocaleString("id-ID")}</TableCell>
+                            <TableCell align="center">
+                              {Number(row.total_transactions).toLocaleString("id-ID")}
+                            </TableCell>
                             <TableCell align="right" sx={{ fontFamily: "monospace" }}>
                               {formatCurrency(row.total_penjualan)}
                             </TableCell>
@@ -278,8 +323,42 @@ export default function SHURetailPage() {
                         ))
                       )}
                     </TableBody>
+                    {data.monthlySummary.length > 0 && (
+                      <TableFooter>
+                        <TableRow sx={{ backgroundColor: "#F9FAFB" }}>
+                          <TableCell sx={{ fontWeight: 700 }}>Total</TableCell>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>
+                            {monthlyTotals.transactions.toLocaleString("id-ID")}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, fontFamily: "monospace" }}>
+                            {formatCurrency(monthlyTotals.sales)}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, fontFamily: "monospace" }}>
+                            {formatCurrency(monthlyTotals.profit)}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, fontFamily: "monospace", color: "#7A2E3A" }}>
+                            {formatCurrency(monthlyTotals.kopi)}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, fontFamily: "monospace", color: "#E85D75" }}>
+                            {formatCurrency(monthlyTotals.coordinator)}
+                          </TableCell>
+                        </TableRow>
+                      </TableFooter>
+                    )}
                   </Table>
                 </TableContainer>
+
+                {data.monthlySummary.length > ROWS_PER_PAGE && (
+                  <Box sx={{ mt: 2 }}>
+                    <Pagination
+                      page={page}
+                      count={Math.ceil(data.monthlySummary.length / ROWS_PER_PAGE)}
+                      total={data.monthlySummary.length}
+                      rowsPerPage={ROWS_PER_PAGE}
+                      onPageChange={setPage}
+                    />
+                  </Box>
+                )}
               </CardContent>
             </Card>
           )}
@@ -294,6 +373,8 @@ const styles = {
     display: "flex",
     justifyContent: "space-between",
     alignItems: "center",
+    flexWrap: "wrap",
+    gap: 2,
     mb: 3,
   },
   title: {
@@ -306,7 +387,7 @@ const styles = {
   },
   summaryContainer: {
     display: "grid",
-    gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+    gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
     gap: 2,
     mb: 3,
   },

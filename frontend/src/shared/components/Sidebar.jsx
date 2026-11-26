@@ -35,6 +35,7 @@ import AssessmentRounded from "@mui/icons-material/AssessmentRounded";
 import LocalShippingRounded from "@mui/icons-material/LocalShippingRounded";
 import ExpandLessRounded from "@mui/icons-material/ExpandLessRounded";
 import ExpandMoreRounded from "@mui/icons-material/ExpandMoreRounded";
+import TrendingUpRounded from "@mui/icons-material/TrendingUpRounded";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 
 export const drawerWidth = 264;
@@ -60,6 +61,7 @@ const roleItems = {
       ],
     },
     { label: "Laporan", path: "/admin/reports", icon: AssessmentRounded },
+    { label: "Prediksi & Restok", path: "/admin/predictions", icon: TrendingUpRounded },
     {
       label: "Log Aktivitas",
       path: "/admin/activity-logs",
@@ -132,6 +134,7 @@ const roleItems = {
       icon: PointOfSaleRounded,
     },
     { label: "Inventory", path: "/retail/master/inventory", icon: TuneRounded },
+    { label: "Prediksi & Restok", path: "/retail/master/predictions", icon: TrendingUpRounded },
   ],
   "Cooperative Member": [
     { label: "Jastip Menu", path: "/member/jastip", icon: ShoppingBagRounded },

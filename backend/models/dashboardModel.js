@@ -1,9 +1,20 @@
 const db = require("../config/db");
 
+const SALES_CUTOFF_SQL =
+  "DATE_SUB((SELECT COALESCE(MAX(sale_date), CURDATE()) FROM sales), INTERVAL ? MONTH)";
+const JASTIP_CUTOFF_SQL =
+  "DATE_SUB((SELECT COALESCE(MAX(created_at), NOW()) FROM jastip_orders WHERE status = 'DONE'), INTERVAL ? MONTH)";
+const JASTIP_ALL_CUTOFF_SQL =
+  "DATE_SUB((SELECT COALESCE(MAX(created_at), NOW()) FROM jastip_orders), INTERVAL ? MONTH)";
+const USER_CUTOFF_SQL =
+  "DATE_SUB((SELECT COALESCE(MAX(created_at), NOW()) FROM users), INTERVAL ? MONTH)";
+
 /**
  * Get dashboard statistics
  */
-exports.getStats = async () => {
+exports.getStats = async (months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
+
   // Total users by status
   const [userStats] = await db.promise().query(`
     SELECT
@@ -72,6 +83,13 @@ exports.getStats = async () => {
     ORDER BY date DESC
   `);
 
+  // Period registrations based on latest user timestamp
+  const [periodRegistrations] = await db.promise().query(`
+    SELECT COUNT(*) as count
+    FROM users
+    WHERE created_at >= ${USER_CUTOFF_SQL}
+  `, [periodMonths]);
+
   return {
     users: {
       total: userStats[0]?.total || 0,
@@ -86,6 +104,7 @@ exports.getStats = async () => {
     })),
     activeSessions: activeSessions,
     todayRegistrations: todayRegistrations[0]?.count || 0,
+    periodRegistrations: Number(periodRegistrations[0]?.count || 0),
     recentActivity: recentActivity,
     recentRegistrations: recentRegistrations,
   };
@@ -133,27 +152,32 @@ exports.getActivityByUser = async (limit = 10) => {
 /**
  * Get jastip overview stats
  */
-exports.getJastipOverview = async () => {
-  // Total sessions by status
+exports.getJastipOverview = async (months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
+
+  // Sessions by status within period
   const [sessionStats] = await db.promise().query(`
     SELECT
       status,
       COUNT(*) as count
     FROM jastip_orders
+    WHERE created_at >= ${JASTIP_ALL_CUTOFF_SQL}
     GROUP BY status
-  `);
+  `, [periodMonths]);
 
-  // Total orders
+  // Done orders within period
   const [orderStats] = await db.promise().query(`
     SELECT
-      COUNT(*) as total_orders,
-      COUNT(DISTINCT coordinator_id) as total_coordinators,
+      COUNT(DISTINCT jo.id) as total_orders,
+      COUNT(DISTINCT jo.coordinator_id) as total_coordinators,
       COUNT(DISTINCT jod.user_id) as total_members
     FROM jastip_orders jo
     LEFT JOIN jastip_order_details jod ON jo.id = jod.order_id
-  `);
+    WHERE jo.status = 'DONE'
+      AND jo.created_at >= ${JASTIP_CUTOFF_SQL}
+  `, [periodMonths]);
 
-  // Revenue stats
+  // Revenue stats within period
   const [revenueStats] = await db.promise().query(`
     SELECT
       COALESCE(SUM(jo.total_amount), 0) as total_revenue,
@@ -161,18 +185,20 @@ exports.getJastipOverview = async () => {
       COALESCE(SUM(jo.koperasi_share), 0) as total_kopi_share
     FROM jastip_orders jo
     WHERE jo.status = 'DONE'
-  `);
+      AND jo.created_at >= ${JASTIP_CUTOFF_SQL}
+  `, [periodMonths]);
 
-  // This month stats
+  // This month stats (latest active month in DONE jastip orders)
   const [thisMonthStats] = await db.promise().query(`
     SELECT
       COUNT(*) as total_sessions,
       COALESCE(SUM(jo.total_amount), 0) as total_revenue,
       COALESCE(SUM(jo.total_profit), 0) as total_profit
     FROM jastip_orders jo
-    WHERE MONTH(jo.created_at) = MONTH(NOW())
-      AND YEAR(jo.created_at) = YEAR(NOW())
-      AND jo.status = 'DONE'
+    WHERE jo.status = 'DONE'
+      AND DATE_FORMAT(jo.created_at, '%Y-%m') = (
+        SELECT DATE_FORMAT(MAX(created_at), '%Y-%m') FROM jastip_orders WHERE status = 'DONE'
+      )
   `);
 
   return {
@@ -205,23 +231,33 @@ exports.getJastipRevenueTrend = async (days = 30) => {
 };
 
 /**
- * Get jastip revenue trend by month (for larger ranges)
+ * Get jastip revenue trend by month (daily when months=1, monthly otherwise)
  */
-exports.getJastipRevenueTrendMonthly = async (months = 12) => {
+exports.getJastipRevenueTrendMonthly = async (months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
+  const bucketExpr =
+    periodMonths === 1
+      ? "DATE_FORMAT(jo.created_at, '%Y-%m-%d')"
+      : "DATE_FORMAT(jo.created_at, '%Y-%m')";
+  const labelExpr =
+    periodMonths === 1
+      ? "DATE_FORMAT(jo.created_at, '%d %b')"
+      : "DATE_FORMAT(jo.created_at, '%b %Y')";
+
   const [data] = await db.promise().query(`
     SELECT
-      DATE_FORMAT(jo.created_at, '%Y-%m') as month,
-      DATE_FORMAT(jo.created_at, '%b %Y') as month_name,
+      ${bucketExpr} as month,
+      ${labelExpr} as month_name,
       COUNT(DISTINCT jo.id) as sessions,
       COALESCE(SUM(jo.total_amount), 0) as revenue,
       COALESCE(SUM(jo.total_profit), 0) as profit,
       COALESCE(SUM(jo.koperasi_share), 0) as kopi_share
     FROM jastip_orders jo
-    WHERE jo.created_at >= DATE_SUB(NOW(), INTERVAL ? MONTH)
+    WHERE jo.created_at >= ${JASTIP_CUTOFF_SQL}
       AND jo.status = 'DONE'
-    GROUP BY DATE_FORMAT(jo.created_at, '%Y-%m'), DATE_FORMAT(jo.created_at, '%b %Y')
+    GROUP BY ${bucketExpr}, ${labelExpr}
     ORDER BY month ASC
-  `, [months]);
+  `, [periodMonths]);
 
   return data;
 };
@@ -229,7 +265,8 @@ exports.getJastipRevenueTrendMonthly = async (months = 12) => {
 /**
  * Get top vendors by revenue
  */
-exports.getJastipTopVendors = async (limit = 10) => {
+exports.getJastipTopVendors = async (limit = 10, months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
   const [data] = await db.promise().query(`
     SELECT
       v.id as vendor_id,
@@ -241,13 +278,13 @@ exports.getJastipTopVendors = async (limit = 10) => {
     FROM vendors v
     LEFT JOIN menus m ON v.id = m.vendor_id
     LEFT JOIN jastip_session_menus jsm ON m.id = jsm.menu_id
-    LEFT JOIN jastip_orders jo ON jsm.session_id = jo.id AND jo.status = 'DONE'
+    LEFT JOIN jastip_orders jo ON jsm.session_id = jo.id AND jo.status = 'DONE' AND jo.created_at >= ${JASTIP_CUTOFF_SQL}
     LEFT JOIN jastip_order_details jod ON jo.id = jod.order_id AND jod.menu_id = m.id
     GROUP BY v.id, v.name
     HAVING total_revenue > 0
     ORDER BY total_revenue DESC
     LIMIT ?
-  `, [limit]);
+  `, [periodMonths, limit]);
 
   return data;
 };
@@ -255,7 +292,8 @@ exports.getJastipTopVendors = async (limit = 10) => {
 /**
  * Get top members by orders
  */
-exports.getJastipTopMembers = async (limit = 10) => {
+exports.getJastipTopMembers = async (limit = 10, months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
   const [data] = await db.promise().query(`
     SELECT
       u.id as member_id,
@@ -267,11 +305,11 @@ exports.getJastipTopMembers = async (limit = 10) => {
       COALESCE(SUM(jod.profit), 0) as total_profit
     FROM users u
     JOIN jastip_order_details jod ON u.id = jod.user_id
-    JOIN jastip_orders jo ON jod.order_id = jo.id AND jo.status = 'DONE'
+    JOIN jastip_orders jo ON jod.order_id = jo.id AND jo.status = 'DONE' AND jo.created_at >= ${JASTIP_CUTOFF_SQL}
     GROUP BY u.id, u.name, u.phone_number
     ORDER BY total_spending DESC
     LIMIT ?
-  `, [limit]);
+  `, [periodMonths, limit]);
 
   return data;
 };
@@ -279,7 +317,8 @@ exports.getJastipTopMembers = async (limit = 10) => {
 /**
  * Get top menus by orders
  */
-exports.getJastipTopMenus = async (limit = 10) => {
+exports.getJastipTopMenus = async (limit = 10, months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
   const [data] = await db.promise().query(`
     SELECT
       m.id as menu_id,
@@ -291,12 +330,12 @@ exports.getJastipTopMenus = async (limit = 10) => {
     FROM menus m
     JOIN vendors v ON m.vendor_id = v.id
     LEFT JOIN jastip_order_details jod ON m.id = jod.menu_id
-    LEFT JOIN jastip_orders jo ON jod.order_id = jo.id AND jo.status = 'DONE'
+    LEFT JOIN jastip_orders jo ON jod.order_id = jo.id AND jo.status = 'DONE' AND jo.created_at >= ${JASTIP_CUTOFF_SQL}
     GROUP BY m.id, m.name, v.name
     HAVING total_qty > 0
     ORDER BY total_qty DESC
     LIMIT ?
-  `, [limit]);
+  `, [periodMonths, limit]);
 
   return data;
 };
@@ -306,7 +345,9 @@ exports.getJastipTopMenus = async (limit = 10) => {
 /**
  * Get retail overview stats
  */
-exports.getRetailOverview = async () => {
+exports.getRetailOverview = async (months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
+
   // Product counts
   const [productStats] = await db.promise().query(`
     SELECT
@@ -315,7 +356,7 @@ exports.getRetailOverview = async () => {
     FROM products p
   `);
 
-  // Sales stats
+  // Sales stats within period
   const [salesStats] = await db.promise().query(`
     SELECT
       COUNT(*) as total_transactions,
@@ -323,15 +364,24 @@ exports.getRetailOverview = async () => {
       COALESCE(SUM(s.total_profit), 0) as total_profit,
       COALESCE(SUM(s.koperasi_share), 0) as total_kopi_share
     FROM sales s
-  `);
+    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+  `, [periodMonths]);
 
-  // Purchase stats
+  const [soldProductStats] = await db.promise().query(`
+    SELECT COUNT(DISTINCT sd.product_id) as sold_products
+    FROM sales_details sd
+    JOIN sales s ON s.id = sd.sale_id
+    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+  `, [periodMonths]);
+
+  // Purchase stats within period
   const [purchaseStats] = await db.promise().query(`
     SELECT
       COUNT(*) as total_purchases,
       COALESCE(SUM(p.total_amount), 0) as total_spent
     FROM purchases p
-  `);
+    WHERE p.purchase_date >= ${SALES_CUTOFF_SQL}
+  `, [periodMonths]);
 
   // Inventory value
   const [inventoryValue] = await db.promise().query(`
@@ -360,20 +410,24 @@ exports.getRetailOverview = async () => {
     ) as low_stock_products
   `);
 
-  // This month stats
+  // This month stats (latest sales month)
   const [thisMonthStats] = await db.promise().query(`
     SELECT
       COUNT(*) as total_transactions,
       COALESCE(SUM(s.total_amount), 0) as total_revenue,
       COALESCE(SUM(s.total_profit), 0) as total_profit
     FROM sales s
-    WHERE MONTH(s.sale_date) = MONTH(NOW())
-      AND YEAR(s.sale_date) = YEAR(NOW())
+    WHERE DATE_FORMAT(s.sale_date, '%Y-%m') = (
+      SELECT DATE_FORMAT(MAX(sale_date), '%Y-%m') FROM sales
+    )
   `);
 
   return {
     productStats: productStats[0] || {},
-    salesStats: salesStats[0] || {},
+    salesStats: {
+      ...(salesStats[0] || {}),
+      sold_products: Number(soldProductStats[0]?.sold_products || 0),
+    },
     purchaseStats: purchaseStats[0] || {},
     inventoryValue: inventoryValue[0] || {},
     lowStockCount: lowStockCount[0]?.low_stock_count || 0,
@@ -402,22 +456,32 @@ exports.getRetailSalesTrend = async (days = 30) => {
 };
 
 /**
- * Get retail sales trend by month
+ * Get retail sales trend (weekly when months=1, monthly otherwise)
  */
-exports.getRetailSalesTrendMonthly = async (months = 12) => {
+exports.getRetailSalesTrendMonthly = async (months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
+  const bucketExpr =
+    periodMonths === 1
+      ? "DATE_FORMAT(DATE_SUB(s.sale_date, INTERVAL WEEKDAY(s.sale_date) DAY), '%Y-%m-%d')"
+      : "DATE_FORMAT(s.sale_date, '%Y-%m')";
+  const labelExpr =
+    periodMonths === 1
+      ? "DATE_FORMAT(DATE_SUB(s.sale_date, INTERVAL WEEKDAY(s.sale_date) DAY), '%d %b')"
+      : "DATE_FORMAT(s.sale_date, '%b %Y')";
+
   const [data] = await db.promise().query(`
     SELECT
-      DATE_FORMAT(s.sale_date, '%Y-%m') as month,
-      DATE_FORMAT(s.sale_date, '%b %Y') as month_name,
+      ${bucketExpr} as month,
+      ${labelExpr} as month_name,
       COUNT(*) as transactions,
       COALESCE(SUM(s.total_amount), 0) as revenue,
       COALESCE(SUM(s.total_profit), 0) as profit,
       COALESCE(SUM(s.koperasi_share), 0) as kopi_share
     FROM sales s
-    WHERE s.sale_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
-    GROUP BY DATE_FORMAT(s.sale_date, '%Y-%m'), DATE_FORMAT(s.sale_date, '%b %Y')
+    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    GROUP BY ${bucketExpr}, ${labelExpr}
     ORDER BY month ASC
-  `, [months]);
+  `, [periodMonths]);
 
   return data;
 };
@@ -425,7 +489,8 @@ exports.getRetailSalesTrendMonthly = async (months = 12) => {
 /**
  * Get sales by category
  */
-exports.getSalesByCategory = async (limit = 10) => {
+exports.getSalesByCategory = async (limit = 10, months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
   const [data] = await db.promise().query(`
     SELECT
       c.id as category_id,
@@ -439,10 +504,11 @@ exports.getSalesByCategory = async (limit = 10) => {
     JOIN products p ON sc.id = p.subcategory_id
     JOIN sales_details sd ON p.id = sd.product_id
     JOIN sales s ON sd.sale_id = s.id
+    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
     GROUP BY c.id, c.name
     ORDER BY total_revenue DESC
     LIMIT ?
-  `, [limit]);
+  `, [periodMonths, limit]);
 
   return data;
 };
@@ -450,7 +516,8 @@ exports.getSalesByCategory = async (limit = 10) => {
 /**
  * Get sales by subcategory
  */
-exports.getSalesBySubcategory = async (limit = 10) => {
+exports.getSalesBySubcategory = async (limit = 10, months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
   const [data] = await db.promise().query(`
     SELECT
       sc.id as subcategory_id,
@@ -463,10 +530,11 @@ exports.getSalesBySubcategory = async (limit = 10) => {
     JOIN products p ON sc.id = p.subcategory_id
     JOIN sales_details sd ON p.id = sd.product_id
     JOIN sales s ON sd.sale_id = s.id
+    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
     GROUP BY sc.id, sc.name
     ORDER BY total_revenue DESC
     LIMIT ?
-  `, [limit]);
+  `, [periodMonths, limit]);
 
   return data;
 };
@@ -474,7 +542,8 @@ exports.getSalesBySubcategory = async (limit = 10) => {
 /**
  * Get top selling products
  */
-exports.getTopSellingProducts = async (limit = 10) => {
+exports.getTopSellingProducts = async (limit = 10, months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
   const [data] = await db.promise().query(`
     SELECT
       p.id as product_id,
@@ -491,10 +560,11 @@ exports.getTopSellingProducts = async (limit = 10) => {
     JOIN categories c ON sc.category_id = c.id
     JOIN sales_details sd ON p.id = sd.product_id
     JOIN sales s ON sd.sale_id = s.id
+    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
     GROUP BY p.id, p.name, p.barcode, c.name, p.selling_price, p.cost_price
     ORDER BY total_qty DESC
     LIMIT ?
-  `, [limit]);
+  `, [periodMonths, limit]);
 
   return data;
 };
@@ -554,34 +624,41 @@ exports.getLowStockProducts = async (limit = 20) => {
 /**
  * Get SHU (Surplus/Defisit) combined overview
  */
-exports.getSHUOverview = async () => {
-  // Retail SHU
+exports.getSHUOverview = async (months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
+
+  // Retail SHU within period
   const [retailSHU] = await db.promise().query(`
     SELECT
+      COUNT(*) as total_transactions,
       COALESCE(SUM(s.total_amount), 0) as total_penjualan,
       COALESCE(SUM(s.total_profit), 0) as total_profit,
       COALESCE(SUM(s.koperasi_share), 0) as kopi_share
     FROM sales s
-  `);
+    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+  `, [periodMonths]);
 
-  // Jastip SHU
+  // Jastip SHU within period
   const [jastipSHU] = await db.promise().query(`
     SELECT
+      COUNT(*) as total_sessions,
       COALESCE(SUM(jo.total_amount), 0) as total_penjualan,
       COALESCE(SUM(jo.total_profit), 0) as total_profit,
       COALESCE(SUM(jo.koperasi_share), 0) as kopi_share
     FROM jastip_orders jo
     WHERE jo.status = 'DONE'
-  `);
+      AND jo.created_at >= ${JASTIP_CUTOFF_SQL}
+  `, [periodMonths]);
 
-  // This month SHU
+  // This month SHU (latest sales month)
   const [thisMonthRetail] = await db.promise().query(`
     SELECT
       COALESCE(SUM(s.total_profit), 0) as profit,
       COALESCE(SUM(s.koperasi_share), 0) as kopi_share
     FROM sales s
-    WHERE MONTH(s.sale_date) = MONTH(NOW())
-      AND YEAR(s.sale_date) = YEAR(NOW())
+    WHERE DATE_FORMAT(s.sale_date, '%Y-%m') = (
+      SELECT DATE_FORMAT(MAX(sale_date), '%Y-%m') FROM sales
+    )
   `);
 
   const [thisMonthJastip] = await db.promise().query(`
@@ -590,63 +667,100 @@ exports.getSHUOverview = async () => {
       COALESCE(SUM(jo.koperasi_share), 0) as kopi_share
     FROM jastip_orders jo
     WHERE jo.status = 'DONE'
-      AND MONTH(jo.created_at) = MONTH(NOW())
-      AND YEAR(jo.created_at) = YEAR(NOW())
+      AND DATE_FORMAT(jo.created_at, '%Y-%m') = (
+        SELECT DATE_FORMAT(MAX(sale_date), '%Y-%m') FROM sales
+      )
   `);
 
   const thisMonthTotal = {
-    profit: (thisMonthRetail[0]?.profit || 0) + (thisMonthJastip[0]?.profit || 0),
-    kopi_share: (thisMonthRetail[0]?.kopi_share || 0) + (thisMonthJastip[0]?.kopi_share || 0),
+    profit: Number(thisMonthRetail[0]?.profit || 0) + Number(thisMonthJastip[0]?.profit || 0),
+    kopi_share: Number(thisMonthRetail[0]?.kopi_share || 0) + Number(thisMonthJastip[0]?.kopi_share || 0),
   };
 
   return {
-    retail: retailSHU[0] || {},
-    jastip: jastipSHU[0] || {},
+    retail: {
+      total_transactions: Number(retailSHU[0]?.total_transactions || 0),
+      total_penjualan: Number(retailSHU[0]?.total_penjualan || 0),
+      total_profit: Number(retailSHU[0]?.total_profit || 0),
+      kopi_share: Number(retailSHU[0]?.kopi_share || 0),
+    },
+    jastip: {
+      total_sessions: Number(jastipSHU[0]?.total_sessions || 0),
+      total_penjualan: Number(jastipSHU[0]?.total_penjualan || 0),
+      total_profit: Number(jastipSHU[0]?.total_profit || 0),
+      kopi_share: Number(jastipSHU[0]?.kopi_share || 0),
+    },
     combined: {
-      total_penjualan: (retailSHU[0]?.total_penjualan || 0) + (jastipSHU[0]?.total_penjualan || 0),
-      total_profit: (retailSHU[0]?.total_profit || 0) + (jastipSHU[0]?.total_profit || 0),
-      kopi_share: (retailSHU[0]?.kopi_share || 0) + (jastipSHU[0]?.kopi_share || 0),
+      total_penjualan: Number(retailSHU[0]?.total_penjualan || 0) + Number(jastipSHU[0]?.total_penjualan || 0),
+      total_profit: Number(retailSHU[0]?.total_profit || 0) + Number(jastipSHU[0]?.total_profit || 0),
+      kopi_share: Number(retailSHU[0]?.kopi_share || 0) + Number(jastipSHU[0]?.kopi_share || 0),
     },
     thisMonth: thisMonthTotal,
   };
 };
 
 /**
- * Get monthly SHU comparison (retail vs jastip)
+ * Get SHU comparison (weekly when months=1, monthly otherwise)
  */
-exports.getMonthlySHUComparison = async (months = 12) => {
-  // Retail monthly
+exports.getMonthlySHUComparison = async (months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
+  const retailBucketExpr =
+    periodMonths === 1
+      ? "DATE_FORMAT(DATE_SUB(s.sale_date, INTERVAL WEEKDAY(s.sale_date) DAY), '%Y-%m-%d')"
+      : "DATE_FORMAT(s.sale_date, '%Y-%m')";
+  const jastipBucketExpr =
+    periodMonths === 1
+      ? "DATE_FORMAT(DATE_SUB(DATE(jo.created_at), INTERVAL WEEKDAY(DATE(jo.created_at)) DAY), '%Y-%m-%d')"
+      : "DATE_FORMAT(jo.created_at, '%Y-%m')";
+
+  // Retail
   const [retailMonthly] = await db.promise().query(`
     SELECT
-      DATE_FORMAT(s.sale_date, '%Y-%m') as month,
+      ${retailBucketExpr} as month,
       COALESCE(SUM(s.total_profit), 0) as retail_profit,
       COALESCE(SUM(s.koperasi_share), 0) as retail_kopi_share
     FROM sales s
-    WHERE s.sale_date >= DATE_SUB(CURDATE(), INTERVAL ? MONTH)
-    GROUP BY DATE_FORMAT(s.sale_date, '%Y-%m')
-  `, [months]);
+    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    GROUP BY ${retailBucketExpr}
+  `, [periodMonths]);
 
-  // Jastip monthly
+  // Jastip
   const [jastipMonthly] = await db.promise().query(`
     SELECT
-      DATE_FORMAT(jo.created_at, '%Y-%m') as month,
+      ${jastipBucketExpr} as month,
       COALESCE(SUM(jo.total_profit), 0) as jastip_profit,
       COALESCE(SUM(jo.koperasi_share), 0) as jastip_kopi_share
     FROM jastip_orders jo
     WHERE jo.status = 'DONE'
-      AND jo.created_at >= DATE_SUB(NOW(), INTERVAL ? MONTH)
-    GROUP BY DATE_FORMAT(jo.created_at, '%Y-%m')
-  `, [months]);
+      AND jo.created_at >= ${SALES_CUTOFF_SQL}
+    GROUP BY ${jastipBucketExpr}
+  `, [periodMonths]);
 
-  // Merge the two
+  // Merge the two with explicit numeric defaults
   const merged = {};
-  retailMonthly.forEach(r => {
-    merged[r.month] = { ...merged[r.month], month: r.month, retail_profit: r.retail_profit, retail_kopi_share: r.retail_kopi_share };
+  const ensureMonth = (month) => {
+    if (!merged[month]) {
+      merged[month] = {
+        month,
+        retail_profit: 0,
+        retail_kopi_share: 0,
+        jastip_profit: 0,
+        jastip_kopi_share: 0,
+      };
+    }
+    return merged[month];
+  };
+
+  retailMonthly.forEach((r) => {
+    const item = ensureMonth(r.month);
+    item.retail_profit = Number(r.retail_profit || 0);
+    item.retail_kopi_share = Number(r.retail_kopi_share || 0);
   });
-  jastipMonthly.forEach(j => {
-    if (!merged[j.month]) merged[j.month] = { month: j.month };
-    merged[j.month].jastip_profit = j.jastip_profit;
-    merged[j.month].jastip_kopi_share = j.jastip_kopi_share;
+
+  jastipMonthly.forEach((j) => {
+    const item = ensureMonth(j.month);
+    item.jastip_profit = Number(j.jastip_profit || 0);
+    item.jastip_kopi_share = Number(j.jastip_kopi_share || 0);
   });
 
   return Object.values(merged).sort((a, b) => a.month.localeCompare(b.month));
@@ -688,7 +802,8 @@ exports.getInventoryBySubcategory = async () => {
 /**
  * Get jastip orders breakdown by division
  */
-exports.getJastipOrdersByDivision = async () => {
+exports.getJastipOrdersByDivision = async (months = 1) => {
+  const periodMonths = Math.max(1, Number(months) || 1);
   const [data] = await db.promise().query(`
     SELECT
       d.id as division_id,
@@ -701,9 +816,10 @@ exports.getJastipOrdersByDivision = async () => {
     JOIN jastip_order_details jod ON u.id = jod.user_id
     JOIN jastip_orders jo ON jod.order_id = jo.id
     WHERE jo.status != 'CANCELLED'
+      AND jo.created_at >= ${JASTIP_ALL_CUTOFF_SQL}
     GROUP BY d.id, d.name
     ORDER BY total_amount DESC
-  `);
+  `, [periodMonths]);
   return data;
 };
 

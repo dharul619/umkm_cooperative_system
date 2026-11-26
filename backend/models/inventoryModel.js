@@ -24,7 +24,7 @@ exports.getProductById = (id) =>
     [id],
   );
 
-exports.getStockCard = (productId) =>
+exports.getStockCard = (productId, { limit = 20, offset = 0 } = {}) =>
   db.promise().query(
     `SELECT
       it.*,
@@ -33,7 +33,14 @@ exports.getStockCard = (productId) =>
     FROM inventory_transactions it
     LEFT JOIN products p ON it.product_id = p.id
     WHERE it.product_id = ?
-    ORDER BY it.created_at ASC, it.id ASC`,
+    ORDER BY it.created_at DESC, it.id DESC
+    LIMIT ? OFFSET ?`,
+    [productId, Number(limit), Number(offset)],
+  );
+
+exports.getStockCardCount = (productId) =>
+  db.promise().query(
+    'SELECT COUNT(*) AS total FROM inventory_transactions WHERE product_id = ?',
     [productId],
   );
 

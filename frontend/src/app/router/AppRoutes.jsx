@@ -39,6 +39,7 @@ import SupplierPage from "../../features/retail/master-data/pages/SupplierPage";
 import PurchasePage from "../../features/retail/purchases/pages/PurchasePage";
 import SalesPage from "../../features/retail/sales/pages/SalesPage";
 import InventoryPage from "../../features/retail/inventory/pages/InventoryPage";
+import PredictionPage from "../../features/retail/predictions/pages/PredictionPage";
 import RetailDashboard from "../../features/retail/dashboard/pages/RetailDashboard";
 import { useAuth } from "../../features/auth/hooks/useAuth";
 import { CircularProgress, Box } from "@mui/material";
@@ -76,6 +77,7 @@ const AppRoutes = () => {
         <Route path="users" element={<UserPages />} />
         <Route path="activity-logs" element={<ActivityLogPage />} />
         <Route path="reports" element={<ReportsPage />}>
+          <Route index element={<Navigate to="retail/penjualan" replace />} />
           <Route path="retail/penjualan" element={<PenjualanRetailPage />} />
           <Route path="retail/stok" element={<StokRetailPage />} />
           <Route path="retail/pembelian" element={<PembelianRetailPage />} />
@@ -88,6 +90,7 @@ const AppRoutes = () => {
         </Route>
         <Route path="master/divisions" element={<DivisionPage />} />
         <Route path="master/departments" element={<DepartmentPage />} />
+        <Route path="predictions" element={<PredictionPage />} />
       </Route>
 
       <Route path="/jastip" element={<RoleRoute requiredRole="Jastip Coordinator"><AdminLayout /></RoleRoute>}>
@@ -114,6 +117,7 @@ const AppRoutes = () => {
         <Route path="master/purchases" element={<PurchasePage />} />
         <Route path="master/sales" element={<SalesPage />} />
         <Route path="master/inventory" element={<InventoryPage />} />
+        <Route path="master/predictions" element={<PredictionPage />} />
       </Route>
 
       <Route path="/member" element={<RoleRoute requiredRole="Cooperative Member"><AdminLayout /></RoleRoute>}>

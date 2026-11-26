@@ -47,5 +47,6 @@ export const API_ENDPOINTS = {
     PURCHASES: "/purchases",
     SALES: "/sales",
     INVENTORY: "/inventory",
+    PREDICTIONS: "/predictions",
   },
 };

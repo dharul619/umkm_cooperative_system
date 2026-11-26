@@ -34,6 +34,7 @@ const InventoryPage = () => {
   const [success, setSuccess] = useState("");
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState(null);
+  const [detailLoading, setDetailLoading] = useState(false);
   const [rowMode, setRowMode] = useState("PRODUCT");
   const [categoryId, setCategoryId] = useState("");
   const [subcategoryId, setSubcategoryId] = useState("");
@@ -144,9 +145,26 @@ const InventoryPage = () => {
   );
 
   const handleOpenDetail = async (row) => {
-    const response = await getStockCard(row.id);
-    setDetailData(response);
     setDetailOpen(true);
+    setDetailLoading(true);
+    try {
+      const response = await getStockCard(row.id, { page: 1, limit: 20 });
+      setDetailData(response);
+    } finally {
+      setDetailLoading(false);
+    }
+  };
+
+  const handleStockCardPageChange = async (newPage) => {
+    const productId = detailData?.product?.id;
+    if (!productId) return;
+    setDetailLoading(true);
+    try {
+      const response = await getStockCard(productId, { page: newPage, limit: 20 });
+      setDetailData(response);
+    } finally {
+      setDetailLoading(false);
+    }
   };
 
   const handleBeginningSubmit = async (event) => {
@@ -290,7 +308,13 @@ const InventoryPage = () => {
         </Box>
       </AppCard>
 
-      <InventoryDetailDialog open={detailOpen} data={detailData} onClose={() => setDetailOpen(false)} />
+      <InventoryDetailDialog
+        open={detailOpen}
+        data={detailData}
+        loading={detailLoading}
+        onPageChange={handleStockCardPageChange}
+        onClose={() => setDetailOpen(false)}
+      />
     </>
   );
 };

@@ -84,7 +84,7 @@ export const generatePDFHeader = (title, reportType, filters = {}) => {
  */
 export const generateSummaryCards = (summaryData, cards) => {
   const cardsHtml = cards.map(card => {
-    const value = summaryData?.[card.key] ?? 0;
+    const value = card.value !== undefined ? card.value : (summaryData?.[card.key] ?? 0);
     const displayValue = card.format === "currency"
       ? formatCurrency(value)
       : card.format === "number"
@@ -113,7 +113,7 @@ export const generateSummaryCards = (summaryData, cards) => {
  * Generate Table HTML
  */
 export const generateTable = (headers, rows, config = {}) => {
-  const { emptyMessage = "Tidak ada data", emptyColspan = headers.length } = config;
+  const { emptyMessage = "Tidak ada data", emptyColspan = headers.length, footerRow = null } = config;
 
   const headersHtml = headers.map(h => `
     <th style="background: #7A2E3A; color: white; padding: 12px 8px; text-align: ${h.align || 'left'};
@@ -145,6 +145,31 @@ export const generateTable = (headers, rows, config = {}) => {
       </tr>
     `;
 
+  let footerColIdx = 0;
+  const footerHtml = rows.length > 0 && Array.isArray(footerRow) && footerRow.length > 0
+    ? `
+      <tfoot>
+        <tr style="background: #f8f9fa; border-top: 2px solid #7A2E3A;">
+          ${footerRow.map((cell) => {
+            const isObj = cell && typeof cell === "object" && !Array.isArray(cell);
+            const content = isObj ? (cell.label ?? "") : cell;
+            const span = isObj && cell.colSpan ? Number(cell.colSpan) : 1;
+            const colSpanAttr = span > 1 ? ` colspan="${span}"` : "";
+            const align = (isObj && cell.align) || headers[footerColIdx]?.align || 'left';
+            const isNumber = align === 'right';
+            footerColIdx += span;
+            return `
+              <td${colSpanAttr} style="padding: 10px 8px; font-size: 11px; font-weight: 700; color: #333; text-align: ${align};
+                         ${isNumber ? 'font-family: monospace;' : ''}">
+                ${content}
+              </td>
+            `;
+          }).join('')}
+        </tr>
+      </tfoot>
+    `
+    : '';
+
   return `
     <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;
                   box-shadow: 0 1px 3px rgba(0,0,0,0.1);">
@@ -154,6 +179,7 @@ export const generateTable = (headers, rows, config = {}) => {
       <tbody>
         ${rowsHtml}
       </tbody>
+      ${footerHtml}
     </table>
   `;
 };
@@ -241,7 +267,7 @@ export const generateProfessionalPDF = ({ title, reportType, filters, summary, s
 
         ${sections ? sections.map(s => `
           ${generateSectionTitle(s.title, s.subtitle)}
-          ${generateTable(s.headers, s.rows, s.config)}
+          ${generateTable(s.headers, s.rows, { ...(s.config || {}), footerRow: s.footerRow || s.config?.footerRow || null })}
         `).join('') : ''}
 
         ${generatePDFFooter()}

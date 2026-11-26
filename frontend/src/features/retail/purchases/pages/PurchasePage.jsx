@@ -8,6 +8,7 @@ import {
   AppCard,
   AppTextField,
   PageHeader,
+  Pagination,
   SectionToolbar,
   StatusAlert,
 } from "../../../../shared/components";
@@ -17,11 +18,14 @@ import PurchaseForm from "../components/PurchaseForm";
 import PurchaseDetailDialog from "../components/PurchaseDetailDialog";
 import PurchaseTable from "../components/PurchaseTable";
 
+const ROWS_PER_PAGE = 20;
+
 const PurchasePage = () => {
   const { suppliers, products, loading: masterLoading } = useRetailMasterData();
   const { purchases, loading, saving, error, refresh, createPurchase, getPurchase } = usePurchases();
   const [tab, setTab] = useState(0);
   const [search, setSearch] = useState("");
+  const [page, setPage] = useState(1);
   const [success, setSuccess] = useState("");
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState(null);
@@ -39,6 +43,14 @@ const PurchasePage = () => {
       ),
     [purchases, search],
   );
+
+  const totalPages = Math.max(1, Math.ceil(filteredRows.length / ROWS_PER_PAGE));
+  const safePage = Math.min(page, totalPages);
+
+  const paginatedRows = useMemo(() => {
+    const start = (safePage - 1) * ROWS_PER_PAGE;
+    return filteredRows.slice(start, start + ROWS_PER_PAGE);
+  }, [filteredRows, safePage]);
 
   const openReceipt = async (purchasePayload) => {
     const candidate = purchasePayload?.data;
@@ -84,7 +96,10 @@ const PurchasePage = () => {
           <AppTextField
             label="Cari pembelian"
             value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            onChange={(e) => {
+              setSearch(e.target.value);
+              setPage(1);
+            }}
             sx={{ width: { xs: "100%", sm: 300 } }}
           />
         }
@@ -94,7 +109,18 @@ const PurchasePage = () => {
           </AppButton>
         }
       />
-      <PurchaseTable rows={filteredRows} loading={loading} onDetail={handleOpenDetail} />
+      <PurchaseTable rows={paginatedRows} loading={loading} onDetail={handleOpenDetail} />
+      {!loading && filteredRows.length > 0 ? (
+        <Box sx={{ mt: 1 }}>
+          <Pagination
+            page={safePage}
+            count={totalPages}
+            total={filteredRows.length}
+            rowsPerPage={ROWS_PER_PAGE}
+            onPageChange={setPage}
+          />
+        </Box>
+      ) : null}
     </Box>
   );
 

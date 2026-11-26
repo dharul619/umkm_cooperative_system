@@ -12,11 +12,17 @@ from features import _check_payday_week, _check_ramadan_lebaran
 ROOT_DIR = Path(__file__).resolve().parent.parent
 SQL_PATH = ROOT_DIR / "assets" / "cooperative_system_db.sql"
 
-START_WEEK = date(2025, 6, 30)
-NUM_WEEKS = 62
+START_WEEK = date(2024, 7, 1)
+NUM_WEEKS = 114
 OPERATOR_IDS = [17, 20]
 DAY_WEIGHTS = np.array([0.16, 0.16, 0.16, 0.16, 0.16, 0.13, 0.07], dtype=float)
 BATCH_SIZE = 700
+NOISE_STD = 0.122
+
+REMOVED_CATEGORY_IDS = {3}
+REMOVED_SUBCATEGORY_IDS = {14}
+REMOVED_BRAND_IDS = {20}
+REMOVED_PRODUCT_IDS = {43}
 
 DRINK_SUBCATS = {1, 2, 3, 4, 5, 6, 15}
 FOOD_SUBCATS = {7, 8, 9, 10, 11, 16, 17}
@@ -48,6 +54,18 @@ NOODLE_BASE_WEEKLY = {
     67: 22.0,
     68: 19.0,
     69: 18.5,
+}
+
+# Permintaan dasar mingguan deterministik untuk 46 produk aktif
+BASE_WEEKLY_DEMAND = {
+    1: 26.0, 2: 24.01, 3: 17.78, 4: 23.37, 5: 16.6, 6: 11.73,
+    7: 9.9, 8: 10.31, 9: 10.61, 10: 13.83, 11: 10.01, 12: 11.83,
+    13: 13.96, 14: 8.14, 15: 11.4, 16: 9.94, 17: 15.68, 18: 8.65,
+    19: 20.42, 20: 8.44, 44: 8.57, 45: 13.85, 46: 9.96, 47: 9.5,
+    48: 10.49, 49: 9.58, 50: 9.76, 51: 13.47, 52: 9.16, 53: 8.72,
+    54: 10.12, 55: 8.91, 56: 9.71, 57: 9.79, 58: 8.42, 59: 12.9,
+    60: 8.57, 61: 10.19, 62: 9.49, 63: 8.0, 64: 25.0, 65: 21.0,
+    66: 20.0, 67: 22.0, 68: 19.0, 69: 18.5,
 }
 
 
@@ -103,8 +121,24 @@ def _replace_table_dump_block(sql_text: str, table_name: str, new_inserts: str, 
 
 
 def ensure_noodle_catalog_in_sql(sql_text: str) -> str:
-    """Pastikan brand mie, subkategori Mie Instan, dan 6 produk mie ada di file SQL."""
+    """Pastikan katalog mie ada dan entri kosmetik dihapus dari file SQL."""
     updated = sql_text
+
+    # 0. Categories (hapus kategori Cosmetic)
+    cat_block = _extract_insert_block(updated, "categories")
+    cat_map: dict[int, tuple] = {}
+    for m in re.finditer(r"\((\d+),\s*'((?:[^'\\]|\\.)*)',\s*'([^']*)',\s*'([^']*)'\)", cat_block):
+        cid = int(m.group(1))
+        if cid in REMOVED_CATEGORY_IDS:
+            continue
+        cat_map[cid] = (cid, m.group(2).replace("\\'", "'"), m.group(3), m.group(4))
+    cat_rows = [cat_map[k] for k in sorted(cat_map)]
+    cat_sql = _format_insert_statements(
+        "categories",
+        ["id", "name", "created_at", "updated_at"],
+        cat_rows,
+    )
+    updated = _replace_table_dump_block(updated, "categories", cat_sql, max(cat_map) + 1)
 
     # 1. Brands
     brands_block = _extract_insert_block(updated, "brands")
@@ -112,7 +146,7 @@ def ensure_noodle_catalog_in_sql(sql_text: str) -> str:
         (int(m.group(1)), m.group(2).replace("\\'", "'"))
         for m in re.finditer(r"\((\d+),\s*'((?:[^'\\]|\\.)*)'\)", brands_block)
     ]
-    brand_map = {bid: name for bid, name in existing_brands}
+    brand_map = {bid: name for bid, name in existing_brands if bid not in REMOVED_BRAND_IDS}
     for bid, name in NEW_BRANDS:
         brand_map[bid] = name
     brands_rows = sorted(brand_map.items(), key=lambda x: x[0])
@@ -124,6 +158,8 @@ def ensure_noodle_catalog_in_sql(sql_text: str) -> str:
     subcat_map: dict[int, tuple] = {}
     for m in re.finditer(r"\((\d+),\s*(\d+),\s*'((?:[^'\\]|\\.)*)',\s*'([^']*)',\s*'([^']*)'\)", subcat_block):
         sid = int(m.group(1))
+        if sid in REMOVED_SUBCATEGORY_IDS:
+            continue
         subcat_map[sid] = (sid, int(m.group(2)), m.group(3).replace("\\'", "'"), m.group(4), m.group(5))
     for row in NEW_SUBCATEGORIES:
         subcat_map[row[0]] = row
@@ -143,6 +179,8 @@ def ensure_noodle_catalog_in_sql(sql_text: str) -> str:
     )
     for m in prod_pat.finditer(prod_block):
         pid = int(m.group(1))
+        if pid in REMOVED_PRODUCT_IDS:
+            continue
         prod_map[pid] = (
             pid,
             m.group(2).replace("\\'", "'"),
@@ -348,7 +386,9 @@ def generate_dataset(products: list[dict], orig_totals: dict[int, int]) -> dict[
     base_weekly_map: dict[int, float] = {}
     for p in products:
         pid = p["id"]
-        if pid in NOODLE_BASE_WEEKLY:
+        if pid in BASE_WEEKLY_DEMAND:
+            base_weekly_map[pid] = BASE_WEEKLY_DEMAND[pid]
+        elif pid in NOODLE_BASE_WEEKLY:
             base_weekly_map[pid] = NOODLE_BASE_WEEKLY[pid]
         elif pid in existing_means:
             norm = (existing_means[pid] - min_m) / span_m
@@ -371,7 +411,7 @@ def generate_dataset(products: list[dict], orig_totals: dict[int, int]) -> dict[
         for p in products:
             pid = p["id"]
             wave_mult = 1.0 + 0.12 * float(np.sin(2 * np.pi * w_idx / 8.0 + (pid % 4) * 0.4))
-            noise = float(np.clip(rng.normal(1.0, 0.175), 0.65, 1.38))
+            noise = float(np.clip(rng.normal(1.0, NOISE_STD), 0.65, 1.38))
             w_qty = max(1, int(round(base_weekly_map[pid] * payday_mult * event_mult * wave_mult * noise)))
 
             weekly_product_qty[(w_idx, pid)] = w_qty
@@ -534,10 +574,25 @@ def update_sql_file(sql_text: str, data: dict[str, list[tuple]]) -> str:
 
 
 def sync_to_mysql(data: dict[str, list[tuple]]) -> None:
-    """Sinkronkan brand/subkategori/produk mie dan data transaksi baru ke MySQL lokal."""
+    """Sinkronkan penghapusan kosmetik, katalog mie, dan data transaksi baru ke MySQL lokal."""
     conn = get_db_connection()
     try:
         with conn.cursor() as cursor:
+            # Kosongkan transaksi & prediksi terlebih dahulu agar FK penghapusan kosmetik aman
+            for tbl in ("sales_predictions", "inventory_transactions", "purchase_details", "purchases", "sales_details", "sales"):
+                cursor.execute(f"DELETE FROM `{tbl}`")
+                cursor.execute(f"ALTER TABLE `{tbl}` AUTO_INCREMENT = 1")
+
+            # Hapus produk kosmetik, subkategori, kategori, dan brand terkait dari MySQL
+            for pid in sorted(REMOVED_PRODUCT_IDS):
+                cursor.execute("DELETE FROM `products` WHERE `id` = %s", (pid,))
+            for sid in sorted(REMOVED_SUBCATEGORY_IDS):
+                cursor.execute("DELETE FROM `subcategories` WHERE `id` = %s", (sid,))
+            for cid in sorted(REMOVED_CATEGORY_IDS):
+                cursor.execute("DELETE FROM `categories` WHERE `id` = %s", (cid,))
+            for bid in sorted(REMOVED_BRAND_IDS):
+                cursor.execute("DELETE FROM `brands` WHERE `id` = %s", (bid,))
+
             # Pastikan master data mie tersedia di MySQL sebelum transaksi masuk
             cursor.executemany(
                 "INSERT INTO `brands` (`id`, `name`) VALUES (%s, %s) ON DUPLICATE KEY UPDATE `name` = VALUES(`name`)",
@@ -555,10 +610,6 @@ def sync_to_mysql(data: dict[str, list[tuple]]) -> None:
                 "`brand_id` = VALUES(`brand_id`), `cost_price` = VALUES(`cost_price`), `selling_price` = VALUES(`selling_price`), `min_stock` = VALUES(`min_stock`), `is_active` = VALUES(`is_active`)",
                 NEW_PRODUCTS,
             )
-
-            for tbl in ("inventory_transactions", "purchase_details", "purchases", "sales_details", "sales"):
-                cursor.execute(f"DELETE FROM `{tbl}`")
-                cursor.execute(f"ALTER TABLE `{tbl}` AUTO_INCREMENT = 1")
 
             insert_specs = [
                 (
@@ -608,8 +659,8 @@ if __name__ == "__main__":
         print(f"  {k:22s}: {len(v)} baris")
 
     updated_sql = update_sql_file(sql_with_noodles, data)
-    sync_to_mysql(data)
-    print("Sinkronisasi ke MySQL  : BERHASIL")
-
     SQL_PATH.write_text(updated_sql, encoding="utf-8")
     print(f"File SQL diperbarui    : {SQL_PATH}")
+
+    sync_to_mysql(data)
+    print("Sinkronisasi ke MySQL  : BERHASIL")

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+﻿import { useState } from "react";
 import RefreshRounded from "@mui/icons-material/RefreshRounded";
 import ReceiptLongRounded from "@mui/icons-material/ReceiptLongRounded";
 import ListAltRounded from "@mui/icons-material/ListAltRounded";
@@ -8,6 +8,7 @@ import {
   AppCard,
   AppTextField,
   PageHeader,
+  Pagination,
   SectionToolbar,
   StatusAlert,
 } from "../../../../shared/components";
@@ -35,26 +36,23 @@ const getSaleErrorMessage = (err) => {
 
 const SalesPage = () => {
   const { products, loading: masterLoading } = useRetailMasterData();
-  const { sales, loading, saving, error, refresh, createSale, getSale } = useSales();
+  const {
+    sales,
+    loading,
+    saving,
+    error,
+    pagination,
+    filters,
+    updateSearch,
+    changePage,
+    refresh,
+    createSale,
+    getSale,
+  } = useSales();
   const [tab, setTab] = useState(0);
-  const [search, setSearch] = useState("");
   const [success, setSuccess] = useState("");
   const [detailOpen, setDetailOpen] = useState(false);
   const [detailData, setDetailData] = useState(null);
-
-  const filteredRows = useMemo(
-    () =>
-      sales.filter(
-        (item) =>
-          !search.trim() ||
-          [item.operator_name, item.sale_date, String(item.total_amount ?? "")]
-            .filter(Boolean)
-            .some((value) =>
-              String(value).toLowerCase().includes(search.trim().toLowerCase()),
-            ),
-      ),
-    [sales, search],
-  );
 
   const openReceipt = async (salePayload) => {
     const candidate = salePayload?.data;
@@ -106,8 +104,8 @@ const SalesPage = () => {
         left={
           <AppTextField
             label="Cari penjualan"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+            value={filters.search}
+            onChange={(e) => updateSearch(e.target.value)}
             sx={{ width: { xs: "100%", sm: 300 } }}
           />
         }
@@ -117,7 +115,7 @@ const SalesPage = () => {
           </AppButton>
         }
       />
-      {filteredRows.map((row) => (
+      {sales.map((row) => (
         <Box
           key={row.id}
           sx={{
@@ -141,7 +139,18 @@ const SalesPage = () => {
           </Box>
         </Box>
       ))}
-      {!loading && !filteredRows.length ? <Typography color="text.secondary">Belum ada data penjualan.</Typography> : null}
+      {!loading && !sales.length ? <Typography color="text.secondary">Belum ada data penjualan.</Typography> : null}
+      {pagination.total > 0 ? (
+        <Box sx={{ mt: 1 }}>
+          <Pagination
+            page={pagination.page}
+            count={pagination.totalPages}
+            total={pagination.total}
+            rowsPerPage={pagination.limit}
+            onPageChange={changePage}
+          />
+        </Box>
+      ) : null}
     </Box>
   );
 

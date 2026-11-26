@@ -25,6 +25,7 @@ app.use("/api/suppliers", require("./backend/routes/supplierRoutes"));
 app.use("/api/purchases", require("./backend/routes/purchaseRoutes"));
 app.use("/api/sales", require("./backend/routes/saleRoutes"));
 app.use("/api/inventory", require("./backend/routes/inventoryRoutes"));
+app.use("/api/predictions", require("./backend/routes/predictionRoutes"));
 app.use("/api/admin/activity-logs", require("./backend/routes/activityLogRoutes"));
 app.use("/api/admin/dashboard", require("./backend/routes/dashboardRoutes"));
 app.use("/api/admin/reports", require("./backend/routes/reportRoutes"));

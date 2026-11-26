@@ -6,10 +6,10 @@ const handleError = (error, fallbackMessage) => {
 };
 
 export const salesService = {
-  getAll: async () => {
+  getAll: async (params = {}) => {
     try {
-      const response = await axiosInstance.get(API_ENDPOINTS.RETAIL.SALES);
-      return response.data.data ?? response.data;
+      const response = await axiosInstance.get(API_ENDPOINTS.RETAIL.SALES, { params });
+      return response.data;
     } catch (error) {
       handleError(error, "Gagal mengambil data penjualan");
     }

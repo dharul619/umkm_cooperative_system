@@ -6,7 +6,8 @@ const model = require("../models/dashboardModel");
  */
 exports.getStats = async (req, res) => {
   try {
-    const stats = await model.getStats();
+    const { months = 1 } = req.query;
+    const stats = await model.getStats(Number(months) || 1);
 
     res.json({
       success: true,
@@ -64,7 +65,8 @@ exports.getActivitySummary = async (req, res) => {
  */
 exports.getJastipOverview = async (req, res) => {
   try {
-    const data = await model.getJastipOverview();
+    const { months = 1 } = req.query;
+    const data = await model.getJastipOverview(Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getJastipOverview error:", err);
@@ -93,8 +95,8 @@ exports.getJastipRevenueTrend = async (req, res) => {
  */
 exports.getJastipRevenueTrendMonthly = async (req, res) => {
   try {
-    const { months = 12 } = req.query;
-    const data = await model.getJastipRevenueTrendMonthly(Number(months));
+    const { months = 1 } = req.query;
+    const data = await model.getJastipRevenueTrendMonthly(Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getJastipRevenueTrendMonthly error:", err);
@@ -108,8 +110,8 @@ exports.getJastipRevenueTrendMonthly = async (req, res) => {
  */
 exports.getJastipTopVendors = async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
-    const data = await model.getJastipTopVendors(Number(limit));
+    const { limit = 10, months = 1 } = req.query;
+    const data = await model.getJastipTopVendors(Number(limit), Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getJastipTopVendors error:", err);
@@ -123,8 +125,8 @@ exports.getJastipTopVendors = async (req, res) => {
  */
 exports.getJastipTopMembers = async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
-    const data = await model.getJastipTopMembers(Number(limit));
+    const { limit = 10, months = 1 } = req.query;
+    const data = await model.getJastipTopMembers(Number(limit), Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getJastipTopMembers error:", err);
@@ -138,8 +140,8 @@ exports.getJastipTopMembers = async (req, res) => {
  */
 exports.getJastipTopMenus = async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
-    const data = await model.getJastipTopMenus(Number(limit));
+    const { limit = 10, months = 1 } = req.query;
+    const data = await model.getJastipTopMenus(Number(limit), Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getJastipTopMenus error:", err);
@@ -155,7 +157,8 @@ exports.getJastipTopMenus = async (req, res) => {
  */
 exports.getRetailOverview = async (req, res) => {
   try {
-    const data = await model.getRetailOverview();
+    const { months = 1 } = req.query;
+    const data = await model.getRetailOverview(Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getRetailOverview error:", err);
@@ -184,8 +187,8 @@ exports.getRetailSalesTrend = async (req, res) => {
  */
 exports.getRetailSalesTrendMonthly = async (req, res) => {
   try {
-    const { months = 12 } = req.query;
-    const data = await model.getRetailSalesTrendMonthly(Number(months));
+    const { months = 1 } = req.query;
+    const data = await model.getRetailSalesTrendMonthly(Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getRetailSalesTrendMonthly error:", err);
@@ -199,8 +202,8 @@ exports.getRetailSalesTrendMonthly = async (req, res) => {
  */
 exports.getSalesByCategory = async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
-    const data = await model.getSalesByCategory(Number(limit));
+    const { limit = 10, months = 1 } = req.query;
+    const data = await model.getSalesByCategory(Number(limit), Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getSalesByCategory error:", err);
@@ -214,8 +217,8 @@ exports.getSalesByCategory = async (req, res) => {
  */
 exports.getSalesBySubcategory = async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
-    const data = await model.getSalesBySubcategory(Number(limit));
+    const { limit = 10, months = 1 } = req.query;
+    const data = await model.getSalesBySubcategory(Number(limit), Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getSalesBySubcategory error:", err);
@@ -229,8 +232,8 @@ exports.getSalesBySubcategory = async (req, res) => {
  */
 exports.getTopSellingProducts = async (req, res) => {
   try {
-    const { limit = 10 } = req.query;
-    const data = await model.getTopSellingProducts(Number(limit));
+    const { limit = 10, months = 1 } = req.query;
+    const data = await model.getTopSellingProducts(Number(limit), Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getTopSellingProducts error:", err);
@@ -276,7 +279,8 @@ exports.getPurchaseTrend = async (req, res) => {
  */
 exports.getSHUOverview = async (req, res) => {
   try {
-    const data = await model.getSHUOverview();
+    const { months = 1 } = req.query;
+    const data = await model.getSHUOverview(Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getSHUOverview error:", err);
@@ -290,8 +294,8 @@ exports.getSHUOverview = async (req, res) => {
  */
 exports.getMonthlySHUComparison = async (req, res) => {
   try {
-    const { months = 12 } = req.query;
-    const data = await model.getMonthlySHUComparison(Number(months));
+    const { months = 1 } = req.query;
+    const data = await model.getMonthlySHUComparison(Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getMonthlySHUComparison error:", err);
@@ -319,7 +323,8 @@ exports.getInventoryBySubcategory = async (req, res) => {
  */
 exports.getJastipOrdersByDivision = async (req, res) => {
   try {
-    const data = await model.getJastipOrdersByDivision();
+    const { months = 1 } = req.query;
+    const data = await model.getJastipOrdersByDivision(Number(months) || 1);
     res.json({ success: true, data });
   } catch (err) {
     console.error("getJastipOrdersByDivision error:", err);
