@@ -11,6 +11,9 @@ import PenjualanRetailPage from "../../features/admin/pages/reports/PenjualanRet
 import StokRetailPage from "../../features/admin/pages/reports/StokRetailPage";
 import PembelianRetailPage from "../../features/admin/pages/reports/PembelianRetailPage";
 import SHURetailPage from "../../features/admin/pages/reports/SHURetailPage";
+import AuditShiftRetailPage from "../../features/admin/pages/reports/AuditShiftRetailPage";
+import TransaksiRetailPage from "../../features/admin/pages/reports/TransaksiRetailPage";
+import DayCloseRetailPage from "../../features/admin/pages/reports/DayCloseRetailPage";
 import JastipSesiPage from "../../features/admin/pages/reports/JastipSesiPage";
 import JastipVendorPage from "../../features/admin/pages/reports/JastipVendorPage";
 import JastipMemberPage from "../../features/admin/pages/reports/JastipMemberPage";
@@ -82,6 +85,9 @@ const AppRoutes = () => {
           <Route path="retail/stok" element={<StokRetailPage />} />
           <Route path="retail/pembelian" element={<PembelianRetailPage />} />
           <Route path="retail/shu" element={<SHURetailPage />} />
+          <Route path="retail/shifts" element={<AuditShiftRetailPage />} />
+          <Route path="retail/day-close" element={<DayCloseRetailPage />} />
+          <Route path="retail/transaksi" element={<TransaksiRetailPage />} />
           <Route path="jastip/sesi" element={<JastipSesiPage />} />
           <Route path="jastip/vendor" element={<JastipVendorPage />} />
           <Route path="jastip/member" element={<JastipMemberPage />} />

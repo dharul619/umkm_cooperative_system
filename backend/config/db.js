@@ -1,4 +1,5 @@
 ﻿const mysql = require("mysql2");
+const { ensurePosSchema } = require("./posSchema");
 
 const db = mysql.createPool({
   host: process.env.DB_HOST,
@@ -53,6 +54,9 @@ db.getConnection((err, connection) => {
   connection.release();
   console.log("Database Connected!");
   ensurePerformanceIndexes();
+  ensurePosSchema(db).catch((schemaErr) => {
+    console.error("Failed to ensure POS schema:", schemaErr.message);
+  });
 });
 
 module.exports = db;

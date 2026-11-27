@@ -1,4 +1,5 @@
 const model = require("../models/reportModel");
+const activityLogModel = require("../models/activityLogModel");
 
 /**
  * Penjualan Retail - Summary
@@ -226,5 +227,164 @@ exports.getJastipMetadata = async (req, res) => {
   } catch (err) {
     console.error("getJastipMetadata error:", err);
     res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Audit Shift & Z-Report Retail
+ * GET /api/admin/reports/shifts-retail
+ */
+exports.getShiftsRetail = async (req, res) => {
+  try {
+    const { from, to, status, audit_status, operator_id, page, limit } = req.query;
+    const data = await model.getShiftsRetail({
+      from,
+      to,
+      status,
+      audit_status,
+      operator_id,
+      page,
+      limit,
+    });
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("getShiftsRetail error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Detail Z-Report Shift Retail
+ * GET /api/admin/reports/shifts-retail/:id
+ */
+exports.getShiftRetailDetail = async (req, res) => {
+  try {
+    const shiftId = Number(req.params.id);
+    if (!Number.isInteger(shiftId) || shiftId <= 0) {
+      return res.status(400).json({ success: false, message: "ID shift tidak valid" });
+    }
+    const data = await model.getShiftRetailDetail(shiftId);
+    if (!data) {
+      return res.status(404).json({ success: false, message: "Shift tidak ditemukan" });
+    }
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("getShiftRetailDetail error:", err);
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Verifikasi Shift Retail oleh Admin
+ * POST /api/admin/reports/shifts-retail/:id/verify
+ */
+exports.verifyShiftRetail = async (req, res) => {
+  try {
+    const shiftId = Number(req.params.id);
+    if (!Number.isInteger(shiftId) || shiftId <= 0) {
+      return res.status(400).json({ success: false, message: "ID shift tidak valid" });
+    }
+    const adminId = req.user?.id;
+    const auditNotes = req.body?.audit_notes ?? req.body?.notes ?? "";
+
+    const data = await model.verifyShiftRetail(shiftId, { adminId, auditNotes });
+    const shiftCode = data?.shift?.shift_code || `#${shiftId}`;
+
+    await activityLogModel.log(
+      adminId,
+      `Verifikasi audit shift ${shiftCode}${auditNotes ? `. Catatan: ${String(auditNotes).trim()}` : ""}`
+    );
+
+    res.json({
+      success: true,
+      data,
+      message: `Shift ${shiftCode} berhasil diverifikasi`,
+    });
+  } catch (err) {
+    console.error("verifyShiftRetail error:", err);
+    res.status(err.statusCode || 500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Preview Tutup Hari (Day Close / EOD)
+ * GET /api/admin/reports/day-closings/preview?date=YYYY-MM-DD
+ */
+exports.getDayClosePreview = async (req, res) => {
+  try {
+    const { date } = req.query;
+    const data = await model.getDayClosePreview(date);
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("getDayClosePreview error:", err);
+    res.status(err.statusCode || 500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Daftar Riwayat Day Close
+ * GET /api/admin/reports/day-closings
+ */
+exports.getDayClosings = async (req, res) => {
+  try {
+    const { from, to, page, limit } = req.query;
+    const data = await model.getDayClosings({ from, to, page, limit });
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("getDayClosings error:", err);
+    res.status(err.statusCode || 500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Detail Day Close
+ * GET /api/admin/reports/day-closings/:id
+ */
+exports.getDayCloseDetail = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    if (!Number.isInteger(id) || id <= 0) {
+      return res.status(400).json({ success: false, message: "ID Day Close tidak valid" });
+    }
+    const data = await model.getDayCloseById(id);
+    if (!data) {
+      return res.status(404).json({ success: false, message: "Data Day Close tidak ditemukan" });
+    }
+    res.json({ success: true, data });
+  } catch (err) {
+    console.error("getDayCloseDetail error:", err);
+    res.status(err.statusCode || 500).json({ success: false, message: err.message });
+  }
+};
+
+/**
+ * Proses Tutup Hari (Day Close / EOD)
+ * POST /api/admin/reports/day-closings
+ */
+exports.createDayClose = async (req, res) => {
+  try {
+    const adminId = req.user?.id;
+    const { business_date, notes } = req.body || {};
+
+    const data = await model.createDayClose({
+      businessDate: business_date,
+      adminId,
+      notes,
+    });
+    const dc = data?.day_closing;
+
+    await activityLogModel.log(
+      adminId,
+      `Tutup Hari (Day Close) ${dc?.closing_code || business_date} untuk tanggal ${dc?.business_date || business_date}${notes ? `. Catatan: ${String(notes).trim()}` : ""}`
+    );
+
+    res.status(201).json({
+      success: true,
+      data,
+      message: `Day Close ${dc?.closing_code || ""} berhasil diproses dan tanggal buku dikunci`,
+    });
+  } catch (err) {
+    console.error("createDayClose error:", err);
+    res.status(err.statusCode || 500).json({ success: false, message: err.message });
   }
 };

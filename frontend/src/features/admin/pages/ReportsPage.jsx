@@ -6,6 +6,8 @@ import ShoppingBagRounded from "@mui/icons-material/ShoppingBagRounded";
 import PaymentsRounded from "@mui/icons-material/PaymentsRounded";
 import GroupsRounded from "@mui/icons-material/GroupsRounded";
 import StorefrontRounded from "@mui/icons-material/StorefrontRounded";
+import FactCheckRounded from "@mui/icons-material/FactCheckRounded";
+import EventAvailableRounded from "@mui/icons-material/EventAvailableRounded";
 import { Box, List, ListItemButton, ListItemIcon, ListItemText, Typography } from "@mui/material";
 import { useLocation, useNavigate, Outlet } from "react-router-dom";
 import PageHeader from "../../../shared/components/PageHeader";
@@ -13,9 +15,12 @@ import PageHeader from "../../../shared/components/PageHeader";
 const menuItems = {
   "Warung Retail": [
     { label: "Penjualan Retail", path: "/admin/reports/retail/penjualan", icon: PointOfSaleRounded },
+    { label: "Daftar Transaksi Retail", path: "/admin/reports/retail/transaksi", icon: ReceiptLongRounded },
     { label: "Stok Retail", path: "/admin/reports/retail/stok", icon: Inventory2Rounded },
     { label: "Pembelian Retail", path: "/admin/reports/retail/pembelian", icon: ShoppingBagRounded },
     { label: "Pembagian SHU", path: "/admin/reports/retail/shu", icon: GroupsRounded },
+    { label: "Audit Shift & Z-Report", path: "/admin/reports/retail/shifts", icon: FactCheckRounded },
+    { label: "Tutup Hari (Day Close)", path: "/admin/reports/retail/day-close", icon: EventAvailableRounded },
   ],
   "Jastip": [
     { label: "Pesanan Jastip by Sesi", path: "/admin/reports/jastip/sesi", icon: ReceiptLongRounded },

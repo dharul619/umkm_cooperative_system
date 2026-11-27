@@ -20,6 +20,17 @@ router.get("/pembelian-retail", c.getPembelianRetail);
 // SHU Retail
 router.get("/shu-retail", c.getSHURetail);
 
+// Audit Shift & Z-Report Retail
+router.get("/shifts-retail", c.getShiftsRetail);
+router.get("/shifts-retail/:id", c.getShiftRetailDetail);
+router.post("/shifts-retail/:id/verify", c.verifyShiftRetail);
+
+// Tutup Hari (Day Close / EOD) Retail
+router.get("/day-closings/preview", c.getDayClosePreview);
+router.get("/day-closings", c.getDayClosings);
+router.get("/day-closings/:id", c.getDayCloseDetail);
+router.post("/day-closings", c.createDayClose);
+
 // ==================== JASTIP ====================
 
 // Pesanan Jastip - Summary & Details

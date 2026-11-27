@@ -87,7 +87,9 @@ const InventoryDetailDialog = ({ open, data, loading = false, onPageChange, onCl
                         <Box sx={{ textAlign: "right" }}>
                           <Typography fontWeight={800}>{item.type} {Number(item.qty || 0)}</Typography>
                           <Typography variant="body2" color="text.secondary">
-                            {item.reference_type === "SALE" || item.reference_type === "PURCHASE" ? `Ref #${item.reference_id || "-"}` : ""}
+                            {["SALE", "PURCHASE", "SALE_VOID", "SALE_RETURN"].includes(item.reference_type)
+                              ? `Ref #${item.reference_id || "-"}`
+                              : ""}
                           </Typography>
                         </Box>
                       </Box>

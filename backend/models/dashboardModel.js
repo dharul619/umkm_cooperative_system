@@ -1,7 +1,28 @@
 const db = require("../config/db");
 
 const SALES_CUTOFF_SQL =
-  "DATE_SUB((SELECT COALESCE(MAX(sale_date), CURDATE()) FROM sales), INTERVAL ? MONTH)";
+  "DATE_SUB((SELECT COALESCE(MAX(sale_date), CURDATE()) FROM sales WHERE COALESCE(status, 'COMPLETED') != 'VOIDED'), INTERVAL ? MONTH)";
+const NOT_VOIDED_SALES = "COALESCE(s.status, 'COMPLETED') != 'VOIDED'";
+const NET_SALE_AMOUNT_EXPR = "(s.total_amount - COALESCE(s.returned_amount, 0))";
+const NET_SALE_PROFIT_EXPR = "(s.total_profit - COALESCE(s.returned_profit, 0))";
+const NET_SALE_KOPI_SHARE_EXPR = `(CASE
+  WHEN COALESCE(s.returned_profit, 0) = 0 THEN COALESCE(s.koperasi_share, 0)
+  WHEN (s.total_profit - COALESCE(s.returned_profit, 0)) > 0
+    THEN (s.total_profit - COALESCE(s.returned_profit, 0)) - FLOOR((s.total_profit - COALESCE(s.returned_profit, 0)) * 0.2)
+  ELSE 0
+END)`;
+const NET_DETAIL_QTY_EXPR = "GREATEST(0, sd.qty - COALESCE(sd.returned_qty, 0))";
+const NET_DETAIL_REVENUE_EXPR = `(CASE
+  WHEN sd.qty > 0 THEN
+    (sd.subtotal * GREATEST(0, sd.qty - COALESCE(sd.returned_qty, 0)) / sd.qty) *
+    (CASE
+      WHEN COALESCE(s.order_discount_amount, 0) > 0 AND (s.subtotal_amount - COALESCE(s.item_discount_amount, 0)) > 0
+        THEN s.total_amount / (s.subtotal_amount - COALESCE(s.item_discount_amount, 0))
+      ELSE 1
+    END)
+  ELSE 0
+END)`;
+const NET_DETAIL_PROFIT_EXPR = `(${NET_DETAIL_REVENUE_EXPR} - (sd.cost_price * ${NET_DETAIL_QTY_EXPR}))`;
 const JASTIP_CUTOFF_SQL =
   "DATE_SUB((SELECT COALESCE(MAX(created_at), NOW()) FROM jastip_orders WHERE status = 'DONE'), INTERVAL ? MONTH)";
 const JASTIP_ALL_CUTOFF_SQL =
@@ -360,18 +381,20 @@ exports.getRetailOverview = async (months = 1) => {
   const [salesStats] = await db.promise().query(`
     SELECT
       COUNT(*) as total_transactions,
-      COALESCE(SUM(s.total_amount), 0) as total_revenue,
-      COALESCE(SUM(s.total_profit), 0) as total_profit,
-      COALESCE(SUM(s.koperasi_share), 0) as total_kopi_share
+      COALESCE(SUM(${NET_SALE_AMOUNT_EXPR}), 0) as total_revenue,
+      COALESCE(SUM(${NET_SALE_PROFIT_EXPR}), 0) as total_profit,
+      COALESCE(SUM(${NET_SALE_KOPI_SHARE_EXPR}), 0) as total_kopi_share
     FROM sales s
-    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    WHERE ${NOT_VOIDED_SALES} AND s.sale_date >= ${SALES_CUTOFF_SQL}
   `, [periodMonths]);
 
   const [soldProductStats] = await db.promise().query(`
     SELECT COUNT(DISTINCT sd.product_id) as sold_products
     FROM sales_details sd
     JOIN sales s ON s.id = sd.sale_id
-    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    WHERE ${NOT_VOIDED_SALES}
+      AND ${NET_DETAIL_QTY_EXPR} > 0
+      AND s.sale_date >= ${SALES_CUTOFF_SQL}
   `, [periodMonths]);
 
   // Purchase stats within period
@@ -414,12 +437,13 @@ exports.getRetailOverview = async (months = 1) => {
   const [thisMonthStats] = await db.promise().query(`
     SELECT
       COUNT(*) as total_transactions,
-      COALESCE(SUM(s.total_amount), 0) as total_revenue,
-      COALESCE(SUM(s.total_profit), 0) as total_profit
+      COALESCE(SUM(${NET_SALE_AMOUNT_EXPR}), 0) as total_revenue,
+      COALESCE(SUM(${NET_SALE_PROFIT_EXPR}), 0) as total_profit
     FROM sales s
-    WHERE DATE_FORMAT(s.sale_date, '%Y-%m') = (
-      SELECT DATE_FORMAT(MAX(sale_date), '%Y-%m') FROM sales
-    )
+    WHERE ${NOT_VOIDED_SALES}
+      AND DATE_FORMAT(s.sale_date, '%Y-%m') = (
+        SELECT DATE_FORMAT(MAX(sale_date), '%Y-%m') FROM sales WHERE COALESCE(status, 'COMPLETED') != 'VOIDED'
+      )
   `);
 
   return {
@@ -443,11 +467,11 @@ exports.getRetailSalesTrend = async (days = 30) => {
     SELECT
       s.sale_date as date,
       COUNT(*) as transactions,
-      COALESCE(SUM(s.total_amount), 0) as revenue,
-      COALESCE(SUM(s.total_profit), 0) as profit,
-      COALESCE(SUM(s.koperasi_share), 0) as kopi_share
+      COALESCE(SUM(${NET_SALE_AMOUNT_EXPR}), 0) as revenue,
+      COALESCE(SUM(${NET_SALE_PROFIT_EXPR}), 0) as profit,
+      COALESCE(SUM(${NET_SALE_KOPI_SHARE_EXPR}), 0) as kopi_share
     FROM sales s
-    WHERE s.sale_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
+    WHERE ${NOT_VOIDED_SALES} AND s.sale_date >= DATE_SUB(CURDATE(), INTERVAL ? DAY)
     GROUP BY s.sale_date
     ORDER BY date ASC
   `, [days]);
@@ -474,11 +498,11 @@ exports.getRetailSalesTrendMonthly = async (months = 1) => {
       ${bucketExpr} as month,
       ${labelExpr} as month_name,
       COUNT(*) as transactions,
-      COALESCE(SUM(s.total_amount), 0) as revenue,
-      COALESCE(SUM(s.total_profit), 0) as profit,
-      COALESCE(SUM(s.koperasi_share), 0) as kopi_share
+      COALESCE(SUM(${NET_SALE_AMOUNT_EXPR}), 0) as revenue,
+      COALESCE(SUM(${NET_SALE_PROFIT_EXPR}), 0) as profit,
+      COALESCE(SUM(${NET_SALE_KOPI_SHARE_EXPR}), 0) as kopi_share
     FROM sales s
-    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    WHERE ${NOT_VOIDED_SALES} AND s.sale_date >= ${SALES_CUTOFF_SQL}
     GROUP BY ${bucketExpr}, ${labelExpr}
     ORDER BY month ASC
   `, [periodMonths]);
@@ -496,16 +520,17 @@ exports.getSalesByCategory = async (limit = 10, months = 1) => {
       c.id as category_id,
       c.name as category_name,
       COUNT(DISTINCT sd.sale_id) as total_transactions,
-      SUM(sd.qty) as total_qty,
-      COALESCE(SUM(sd.subtotal), 0) as total_revenue,
-      COALESCE(SUM(sd.subtotal - (sd.cost_price * sd.qty)), 0) as total_profit
+      SUM(${NET_DETAIL_QTY_EXPR}) as total_qty,
+      COALESCE(ROUND(SUM(${NET_DETAIL_REVENUE_EXPR}), 0), 0) as total_revenue,
+      COALESCE(ROUND(SUM(${NET_DETAIL_PROFIT_EXPR}), 0), 0) as total_profit
     FROM categories c
     JOIN subcategories sc ON c.id = sc.category_id
     JOIN products p ON sc.id = p.subcategory_id
     JOIN sales_details sd ON p.id = sd.product_id
     JOIN sales s ON sd.sale_id = s.id
-    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    WHERE ${NOT_VOIDED_SALES} AND s.sale_date >= ${SALES_CUTOFF_SQL}
     GROUP BY c.id, c.name
+    HAVING total_qty > 0
     ORDER BY total_revenue DESC
     LIMIT ?
   `, [periodMonths, limit]);
@@ -523,15 +548,16 @@ exports.getSalesBySubcategory = async (limit = 10, months = 1) => {
       sc.id as subcategory_id,
       sc.name as subcategory_name,
       COUNT(DISTINCT sd.sale_id) as total_transactions,
-      SUM(sd.qty) as total_qty,
-      COALESCE(SUM(sd.subtotal), 0) as total_revenue,
-      COALESCE(SUM(sd.subtotal - (sd.cost_price * sd.qty)), 0) as total_profit
+      SUM(${NET_DETAIL_QTY_EXPR}) as total_qty,
+      COALESCE(ROUND(SUM(${NET_DETAIL_REVENUE_EXPR}), 0), 0) as total_revenue,
+      COALESCE(ROUND(SUM(${NET_DETAIL_PROFIT_EXPR}), 0), 0) as total_profit
     FROM subcategories sc
     JOIN products p ON sc.id = p.subcategory_id
     JOIN sales_details sd ON p.id = sd.product_id
     JOIN sales s ON sd.sale_id = s.id
-    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    WHERE ${NOT_VOIDED_SALES} AND s.sale_date >= ${SALES_CUTOFF_SQL}
     GROUP BY sc.id, sc.name
+    HAVING total_qty > 0
     ORDER BY total_revenue DESC
     LIMIT ?
   `, [periodMonths, limit]);
@@ -552,16 +578,17 @@ exports.getTopSellingProducts = async (limit = 10, months = 1) => {
       c.name as category_name,
       p.selling_price,
       p.cost_price,
-      SUM(sd.qty) as total_qty,
-      COALESCE(SUM(sd.subtotal), 0) as total_revenue,
-      COALESCE(SUM(sd.subtotal - (sd.cost_price * sd.qty)), 0) as total_profit
+      SUM(${NET_DETAIL_QTY_EXPR}) as total_qty,
+      COALESCE(ROUND(SUM(${NET_DETAIL_REVENUE_EXPR}), 0), 0) as total_revenue,
+      COALESCE(ROUND(SUM(${NET_DETAIL_PROFIT_EXPR}), 0), 0) as total_profit
     FROM products p
     JOIN subcategories sc ON p.subcategory_id = sc.id
     JOIN categories c ON sc.category_id = c.id
     JOIN sales_details sd ON p.id = sd.product_id
     JOIN sales s ON sd.sale_id = s.id
-    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    WHERE ${NOT_VOIDED_SALES} AND s.sale_date >= ${SALES_CUTOFF_SQL}
     GROUP BY p.id, p.name, p.barcode, c.name, p.selling_price, p.cost_price
+    HAVING total_qty > 0
     ORDER BY total_qty DESC
     LIMIT ?
   `, [periodMonths, limit]);
@@ -631,11 +658,11 @@ exports.getSHUOverview = async (months = 1) => {
   const [retailSHU] = await db.promise().query(`
     SELECT
       COUNT(*) as total_transactions,
-      COALESCE(SUM(s.total_amount), 0) as total_penjualan,
-      COALESCE(SUM(s.total_profit), 0) as total_profit,
-      COALESCE(SUM(s.koperasi_share), 0) as kopi_share
+      COALESCE(SUM(${NET_SALE_AMOUNT_EXPR}), 0) as total_penjualan,
+      COALESCE(SUM(${NET_SALE_PROFIT_EXPR}), 0) as total_profit,
+      COALESCE(SUM(${NET_SALE_KOPI_SHARE_EXPR}), 0) as kopi_share
     FROM sales s
-    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    WHERE ${NOT_VOIDED_SALES} AND s.sale_date >= ${SALES_CUTOFF_SQL}
   `, [periodMonths]);
 
   // Jastip SHU within period
@@ -653,12 +680,13 @@ exports.getSHUOverview = async (months = 1) => {
   // This month SHU (latest sales month)
   const [thisMonthRetail] = await db.promise().query(`
     SELECT
-      COALESCE(SUM(s.total_profit), 0) as profit,
-      COALESCE(SUM(s.koperasi_share), 0) as kopi_share
+      COALESCE(SUM(${NET_SALE_PROFIT_EXPR}), 0) as profit,
+      COALESCE(SUM(${NET_SALE_KOPI_SHARE_EXPR}), 0) as kopi_share
     FROM sales s
-    WHERE DATE_FORMAT(s.sale_date, '%Y-%m') = (
-      SELECT DATE_FORMAT(MAX(sale_date), '%Y-%m') FROM sales
-    )
+    WHERE ${NOT_VOIDED_SALES}
+      AND DATE_FORMAT(s.sale_date, '%Y-%m') = (
+        SELECT DATE_FORMAT(MAX(sale_date), '%Y-%m') FROM sales WHERE COALESCE(status, 'COMPLETED') != 'VOIDED'
+      )
   `);
 
   const [thisMonthJastip] = await db.promise().query(`
@@ -717,10 +745,10 @@ exports.getMonthlySHUComparison = async (months = 1) => {
   const [retailMonthly] = await db.promise().query(`
     SELECT
       ${retailBucketExpr} as month,
-      COALESCE(SUM(s.total_profit), 0) as retail_profit,
-      COALESCE(SUM(s.koperasi_share), 0) as retail_kopi_share
+      COALESCE(SUM(${NET_SALE_PROFIT_EXPR}), 0) as retail_profit,
+      COALESCE(SUM(${NET_SALE_KOPI_SHARE_EXPR}), 0) as retail_kopi_share
     FROM sales s
-    WHERE s.sale_date >= ${SALES_CUTOFF_SQL}
+    WHERE ${NOT_VOIDED_SALES} AND s.sale_date >= ${SALES_CUTOFF_SQL}
     GROUP BY ${retailBucketExpr}
   `, [periodMonths]);
 
