@@ -69,7 +69,7 @@ const buildRetailQueryFilters = (filters = {}) => {
   };
 };
 
-const NOT_VOIDED_SALES = "COALESCE(s.status, 'COMPLETED') != 'VOIDED'";
+const NOT_VOIDED_SALES = "s.status != 'VOIDED'";
 const NET_SALE_AMOUNT_EXPR = "(s.total_amount - COALESCE(s.returned_amount, 0))";
 const NET_SALE_PROFIT_EXPR = "(s.total_profit - COALESCE(s.returned_profit, 0))";
 const NET_SALE_KOPI_SHARE_EXPR = `(CASE

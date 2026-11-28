@@ -6,6 +6,9 @@ exports.getAll = () =>
 exports.create = (data) =>
   db.promise().query('INSERT INTO products SET ?', data);
 
+exports.createWithConnection = (conn, data) =>
+  conn.query('INSERT INTO products SET ?', data);
+
 exports.update = (id, data) =>
   db.promise().query('UPDATE products SET ? WHERE id=?', [data, id]);
 

@@ -21,7 +21,15 @@ export const useInventory = () => {
   }, []);
 
   useEffect(() => {
-    fetchStocks();
+    let mounted = true;
+    Promise.resolve().then(() => {
+      if (mounted) {
+        fetchStocks();
+      }
+    });
+    return () => {
+      mounted = false;
+    };
   }, [fetchStocks]);
 
   const createBeginningStock = async (payload) => {

@@ -57,6 +57,13 @@ const formatCurrency = (value) =>
     maximumFractionDigits: 1,
   }).format(Number(value || 0));
 
+const formatCurrencyFull = (value) =>
+  new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    maximumFractionDigits: 0,
+  }).format(Number(value || 0));
+
 const formatNumber = (value) => new Intl.NumberFormat("id-ID").format(Number(value || 0));
 
 const formatMonthYear = (value) => {
@@ -110,7 +117,7 @@ const CustomTooltip = ({ active, payload, label }) => {
               {entry.name}
             </Typography>
             <Typography variant="caption" sx={{ color: "#F8FAFC", fontWeight: 800, ml: "auto" }}>
-              {formatCurrency(entry.value)}
+              {formatCurrencyFull(entry.value)}
             </Typography>
           </Stack>
         ))}
@@ -547,7 +554,7 @@ const OverviewTab = ({ shu, stats, retail, jastip, predictions, usersByDivision,
       >
         <AppCard sx={{ height: "100%", display: "flex", flexDirection: "column" }}>
           <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ mb: 2 }}>
-            Profit Bulanan (Ritel & Jastip)
+            Profit {months === 1 ? "Mingguan" : "Bulanan"} (Ritel & Jastip)
           </Typography>
           {loading ? (
             <Skeleton variant="rectangular" height={280} sx={{ borderRadius: 2 }} />
@@ -802,7 +809,7 @@ const JastipTab = ({ jastip, months, loading, onNavigateToRoute }) => {
       >
         <AppCard sx={{ height: "100%" }}>
           <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ mb: 2 }}>
-            Tren Pendapatan & SHU Jastip
+            Tren Pendapatan & SHU Jastip ({months === 1 ? "Harian" : "Bulanan"})
           </Typography>
           {loading ? (
             <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
@@ -1018,7 +1025,7 @@ const RetailTab = ({ retail, predictions, months, loading, onNavigateToRoute }) 
       >
         <AppCard sx={{ height: "100%" }}>
           <Typography variant="subtitle1" fontWeight={800} color="text.primary" sx={{ mb: 2 }}>
-            Tren Penjualan & SHU Ritel
+            Tren Penjualan & SHU Ritel ({months === 1 ? "Mingguan" : "Bulanan"})
           </Typography>
           {loading ? (
             <Skeleton variant="rectangular" height={300} sx={{ borderRadius: 2 }} />
@@ -1278,6 +1285,7 @@ const UserTab = ({ stats, pendingUsers = [], approveUser, rejectUser, months, lo
 
 // ===================== MAIN COMPONENT =====================
 const AdminDashboard = () => {
+  const [tab, setTab] = useState(0);
   const {
     stats,
     jastip,
@@ -1293,8 +1301,7 @@ const AdminDashboard = () => {
     months,
     setMonths,
     refresh,
-  } = useDashboard();
-  const [tab, setTab] = useState(0);
+  } = useDashboard(tab);
   const navigate = useNavigate();
 
   const periodFilterActions = (

@@ -22,6 +22,7 @@ const initialStateByType = {
     cost_price: "",
     selling_price: "",
     min_stock: 0,
+    beginning_stock: "",
     is_active: 1,
   },
   supplier: { name: "", phone: "", address: "", is_active: 1 },
@@ -51,14 +52,23 @@ const RetailMasterDataForm = ({
   );
 
   useEffect(() => {
+    let mounted = true;
     const base = initialStateByType[type] || { name: "" };
-    setFormData({
+    const nextData = {
       ...base,
       ...Object.keys(base).reduce((acc, key) => {
         acc[key] = item?.[key] ?? base[key];
         return acc;
       }, {}),
+    };
+    Promise.resolve().then(() => {
+      if (mounted) {
+        setFormData(nextData);
+      }
     });
+    return () => {
+      mounted = false;
+    };
   }, [item, open, type]);
 
   const handleChange = (event) => {
@@ -82,6 +92,11 @@ const RetailMasterDataForm = ({
         payload.selling_price === "" ? null : Number(payload.selling_price);
       payload.min_stock = Number(payload.min_stock || 0);
       payload.is_active = Number(payload.is_active ?? 1);
+      if (!item && payload.beginning_stock !== "" && payload.beginning_stock != null) {
+        payload.beginning_stock = Number(payload.beginning_stock);
+      } else {
+        delete payload.beginning_stock;
+      }
     }
     if (type === "supplier") {
       payload.phone = payload.phone?.trim?.() || "";
@@ -238,6 +253,16 @@ const RetailMasterDataForm = ({
                 value={formData.min_stock}
                 onChange={handleChange}
               />
+              {!item && (
+                <AppTextField
+                  label="Stok Awal (Opsional)"
+                  name="beginning_stock"
+                  type="number"
+                  value={formData.beginning_stock}
+                  onChange={handleChange}
+                  inputProps={{ min: 0, step: 1 }}
+                />
+              )}
             </>
           )}
 

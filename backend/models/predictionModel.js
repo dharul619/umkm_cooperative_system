@@ -16,16 +16,17 @@ exports.getActiveProductsWithStock = () =>
       c.name AS category_name,
       b.id AS brand_id,
       b.name AS brand_name,
-      COALESCE(SUM(CASE WHEN it.type = 'IN' THEN it.qty ELSE -it.qty END), 0) AS current_stock
+      COALESCE(inv.stock, 0) AS current_stock
     FROM products p
     LEFT JOIN subcategories sc ON sc.id = p.subcategory_id
     LEFT JOIN categories c ON c.id = sc.category_id
     LEFT JOIN brands b ON b.id = p.brand_id
-    LEFT JOIN inventory_transactions it ON it.product_id = p.id
+    LEFT JOIN (
+      SELECT product_id, SUM(CASE WHEN type = 'IN' THEN qty ELSE -qty END) AS stock
+      FROM inventory_transactions
+      GROUP BY product_id
+    ) inv ON inv.product_id = p.id
     WHERE p.is_active = 1
-    GROUP BY
-      p.id, p.name, p.barcode, p.unit, p.cost_price, p.selling_price, p.min_stock,
-      sc.id, sc.name, c.id, c.name, b.id, b.name
     ORDER BY p.id ASC
   `);
 

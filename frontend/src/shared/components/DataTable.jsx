@@ -191,7 +191,7 @@ const DataTable = ({
       sx={{
         border: "1px solid #F9D5DC",
         borderRadius: 2,
-        overflow: "hidden",
+        overflowX: "auto",
         ...sx,
       }}
     >
